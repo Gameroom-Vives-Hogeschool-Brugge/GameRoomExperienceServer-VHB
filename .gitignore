@@ -77,6 +77,7 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
+*.env
 .env
 .env.development.local
 .env.test.local
@@ -140,5 +141,11 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+
+#excelfiles
+storage/*.xlsx
+
+#Dockerfile
+Dockerfile
 
 # End of https://www.toptal.com/developers/gitignore/api/node

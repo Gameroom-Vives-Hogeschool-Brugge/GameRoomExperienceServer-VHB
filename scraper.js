@@ -4,31 +4,42 @@ module.exports = class Scraper {
   constructor() {
     this.geenKaartnummerXPath = "/html/body/div[1]/div[2]/div/div[1]",
     this.studentXPath ='/html/body/div[1]/div[2]/div/div/div/div/div[1]/div[6]/div[2]/div/div/div/div/span'
-    this.page = null;
+    this.locationXPath = '/html/body/div[1]/div[2]/div/div/div/div/div[2]/div[1]/div[2]/span'
+    this.browser = undefined;
+  }
+
+  getPage = async (url) => {
+    this.browser = await this.puppeteer.launch();
+    const page = await this.browser.newPage();
+
+    await page.goto(url);
+
+    return page;
   }
 
   scrapeWebsite = async (url) => {
         let studentFound = false;
 
-        const browser = await this.puppeteer.launch();
-        this.page = await browser.newPage();
-        await this.page.goto(url);
+        const page = await this.getPage(url);
 
-        const cardNumberFound = await this.checkValidCardNumber();
+        const cardNumberFound = await this.checkValidCardNumber(page);
         if (cardNumberFound) {
-            studentFound = await this.findStudent();
+            studentFound = await this.findElement(page, this.studentXPath);
+        } else {
+            await this.browser.close();
         }
 
         if (studentFound) {
-            console.log("Student gevonden");
+            await this.browser.close();
+            return true;
         } else {
-            console.log("Student niet gevonden");
+            await this.browser.close();
+            return false;
         }
-        await browser.close();
     }
 
-    checkValidCardNumber = async () => {
-        const elements = await this.page.$x(this.geenKaartnummerXPath)
+    checkValidCardNumber = async (page) => {
+        const elements = await page.$x(this.geenKaartnummerXPath)
             
         if (elements.length > 0) {
             const element = elements[0];
@@ -36,25 +47,21 @@ module.exports = class Scraper {
             const textContent = await textContentProp.jsonValue();
 
             if (textContent.includes("Het kaartnummer is niet juist.")) {
-                console.log("Het kaartnummer is niet juist.");
                 return false;
             } else {
-                console.log("Kaartnummer gevonden")
                 return true;
             }
         }
     }
 
-    findStudent = async () => {
-        const elements = await this.page.$x(this.studentXPath)
-                
+    findElement= async (page, xpath) => {
+        const elements = await page.$x(xpath)
+        
         if (elements.length > 0) {
             const element = elements[0];
             const textContentProp = await element.getProperty('textContent');
             const textContent = await textContentProp.jsonValue();
-            console.log(textContent);
-            return true;
+            return textContent;
         }
-        return false;
     }
 }
