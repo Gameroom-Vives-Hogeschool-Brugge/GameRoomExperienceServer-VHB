@@ -148,4 +148,7 @@ storage/*.xlsx
 #Dockerfile
 Dockerfile
 
+#storage json files
+storage/*.json
+
 # End of https://www.toptal.com/developers/gitignore/api/node

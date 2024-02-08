@@ -2,6 +2,7 @@ const express = require('express')
 var bodyParser = require('body-parser')
 const urlScraper = require('./scraper.js');
 const excelParser = require('./excelParser.js');
+const db = require('./database.js');
 const app = express()
 
 
@@ -11,10 +12,59 @@ app.use(bodyParser.json())
 const port = 3000
 
 app.post('/login', async (req, res) => {
-    const url = req.body.link;
+    const database = new db();
     scraper = new urlScraper();
-    const studentFound = await scraper.scrapeWebsite(url);
-    res.send(studentFound);
+    const url = req.body.link;
+
+    if (!scraper.checkValidUrl(url)) {
+
+        res.status(400)
+        res.send("Invalid URL");
+        return;
+    } 
+ 
+    const cardNumber = url.split("/").pop();
+    const personFound = database.searchWholeDatabase(cardNumber);
+
+    if (personFound) {
+
+        res.status(202);
+        res.send(personFound);
+        return;
+    }
+
+    const page = await scraper.getPage(url);
+    const cardNumberFound = await scraper.findElement(page, scraper.noCardNumberXPath);
+    
+    if ((cardNumberFound == scraper.cardNotFoundMessage) || (cardNumberFound == scraper.falseCardMessage)) {
+        res.status(404); //voor error bericht
+        res.send("Card not found or invalid card number.");
+        await scraper.browser.close();
+        return;
+    } else {
+        const studentFound = await scraper.findElement(page, scraper.studentXPath);
+        const profFound = await scraper.findElement(page, scraper.profXPath);
+
+        if (studentFound == "Student") {
+            const placeFound = await scraper.findElement(page, scraper.locationXPath);
+
+            if (placeFound == "Kortrijk") { //Needs to be changed to Brugge
+                res.status(202); //Voor verwijzing naar registratiepagina
+                res.send("Student found");
+            } else {
+                res.status(401); //voor error bericht
+                res.send("Not a Valid Student or Prof"); //Needs to be changed to Brugge
+            }
+        } else if (profFound == "Personeelslid") {
+            res.status(202);
+            res.send("Prof found"); //Voor verwijzing naar registratiepagina
+        } else {
+            res.status(401)
+            res.send("Not a Valid Student or Prof");
+        }
+        await scraper.browser.close();
+        return;
+    }
 })
 
 app.get('/registrations', (req, res) => {
@@ -27,9 +77,16 @@ app.get('/registrations', (req, res) => {
     res.send(names);
 })
 
+app.get("/started", (req, res) => {
+    res.status(200);
+    res.send("Server is running");
+})
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
+module.exports.app = app
 
 
 
