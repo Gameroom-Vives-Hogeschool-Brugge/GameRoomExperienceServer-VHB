@@ -3,9 +3,15 @@ var bodyParser = require('body-parser')
 const urlScraper = require('./scraper.js');
 const excelParser = require('./excelParser.js');
 const db = require('./database.js');
-const app = express()
+const app = express();
+const cors = require('cors');
 
+const corsOptions = {
+    origin: ["http://localhost:5173"],
+    optionsSuccessStatus: 200
+  }
 
+app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
@@ -15,6 +21,8 @@ app.post('/login', async (req, res) => {
     const database = new db();
     scraper = new urlScraper();
     const url = req.body.link;
+    console.log(req.body);
+    res.header("Access-Control-Allow-Origin", "*");
 
     if (!scraper.checkValidUrl(url)) {
 
@@ -28,7 +36,7 @@ app.post('/login', async (req, res) => {
 
     if (personFound) {
 
-        res.status(202);
+        res.status(297); // voor verwijzing naar registratiepagina
         res.send(personFound);
         return;
     }
@@ -47,23 +55,24 @@ app.post('/login', async (req, res) => {
 
         if (studentFound == "Student") {
             const placeFound = await scraper.findElement(page, scraper.locationXPath);
+            await scraper.browser.close();
 
             if (placeFound == "Kortrijk") { //Needs to be changed to Brugge
-                res.status(202); //Voor verwijzing naar registratiepagina
-                res.send("Student found");
+                res.status(299); //Voor verwijzing naar registratiepagina
+                res.send(cardNumber);
             } else {
                 res.status(401); //voor error bericht
                 res.send("Not a Valid Student or Prof"); //Needs to be changed to Brugge
             }
         } else if (profFound == "Personeelslid") {
-            res.status(202);
+            await scraper.browser.close();
+            res.status(298);
             res.send("Prof found"); //Voor verwijzing naar registratiepagina
         } else {
+            await scraper.browser.close();
             res.status(401)
             res.send("Not a Valid Student or Prof");
         }
-        await scraper.browser.close();
-        return;
     }
 })
 
@@ -72,9 +81,40 @@ app.get('/registrations', (req, res) => {
     parser = new excelParser(file);
     const registrations = parser.giveAllRegistrationsInJSON();
     const bruggeRegistrations = parser.removeAllRegistrationNotFromBrugge(registrations);
+
+    //console.log(bruggeRegistrations);
+
+    //check if names are already in the database and remove them from the list
     const names = parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
 
+
+    res.header("Access-Control-Allow-Origin", "*");
     res.send(names);
+})
+
+app.post('/registrations', (req, res) => {
+    const file = "./storage/StudentList.xlsx";
+    const parser = new excelParser(file);
+
+    const database = new db();
+
+    const registrations = parser.giveAllRegistrationsInJSON();
+    const registeredPerson = req.body;
+    const personFound = parser.findPersonInRegistrations(registeredPerson, registrations);
+    
+    if (personFound) {
+        const succes = database.addPerson(personFound, database.types.students);
+
+        if (succes) {
+            res.status(202);
+        } else {
+            res.status(500);
+        }
+    } else {
+        res.status(404);
+        res.send("Person not found");
+    }
+
 })
 
 app.get("/started", (req, res) => {

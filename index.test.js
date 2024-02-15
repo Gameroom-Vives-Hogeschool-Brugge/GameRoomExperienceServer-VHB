@@ -45,27 +45,27 @@ test ("check if login sends a 400 code when the url is not correct", async () =>
     expect(response.statusCode).toBe(400);
 });
 
-test ("check if login sends 202 code when a student is found and from Kortrijk", async () => {
+test ("check if login sends 299 code when a student is found and from Kortrijk", async () => {
     expect.assertions(1);
 
     const validCardLink = studenKortrijkUrl
     const response = await request(server.app).post('/login').send({link: validCardLink});
-    expect(response.statusCode).toBe(202);
+    expect(response.statusCode).toBe(299);
 });
 
-test ("check if login sends 202 code when a person is found in the database", async () => {
+test ("check if login sends 297 code when a person is found in the database", async () => {
     expect.assertions(1);
 
     const validCardLink = `https://kaart.associatie.kuleuven.be/${profExample.cardNumber}`;
     const response = await request(server.app).post('/login').send({link: validCardLink});
-    expect(response.statusCode).toBe(202);
+    expect(response.statusCode).toBe(297);
 });
 
 test ("check if loging sends 401 code if the student is not from Kortrijk and not in the database", async () => {
     //untestable at the moment due to insufficient cardnumbers
 });
 
-test ("check if login sends 202 cod when a prof is found", async () => {
+test ("check if login sends 298 cod when a prof is found", async () => {
     //untestable at the moment due to insufficient cardnumbers
 });
 

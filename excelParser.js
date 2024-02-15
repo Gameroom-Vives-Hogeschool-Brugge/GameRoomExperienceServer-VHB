@@ -28,4 +28,12 @@ module.exports = class ExcelParser {
 
         return names;
     }
+
+    findPersonInRegistrations(person, registrations){
+        const personFound = registrations.find((registration) => {
+            return registration.Voornaam === person.firstName && registration.Familienaam === person.lastName;
+        });
+
+        return personFound;
+    }
 }

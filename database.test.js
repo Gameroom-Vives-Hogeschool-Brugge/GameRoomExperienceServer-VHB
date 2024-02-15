@@ -2,7 +2,6 @@ const e = require('express');
 const db = require('./database');
 const exampleFile = require('./storage/examples.json');
 let database = undefined;
-let file = undefined;
 
 const studentExample = exampleFile.examples.studentExample
 const studentExample2 = exampleFile.examples.studentExample2
@@ -11,7 +10,7 @@ const exceptionExample = exampleFile.examples.exceptionExample
 const exceptionExample2 = exampleFile.examples.exceptionExample2
 
 beforeAll(() => {
-    database = new db(file);
+    database = new db();
 });
 
 test ("check if the files exists", () => {
@@ -55,13 +54,13 @@ test ("check if we can get all the registered exceptions", () => {
 test ("check if we can find a exception by number", () => {
     expect.assertions(1);
 
-    const exception = database.findPerson(exceptionExample.exceptionNumber, "exceptionNumber", 
+    const exception = database.findPerson(exceptionExample2.exceptionNumber, "exceptionNumber", 
         {
             fileName: database.exceptionsFile,
-            personType: "exceptions"
+            personType: database.types.exceptions
         });
 
-    expect(exception.firstName).toBe(exceptionExample.firstName)
+    expect(exception.firstName).toBe(exceptionExample2.firstName)
 });
 
 test ("check if we can find a student by number", () => {
@@ -70,7 +69,7 @@ test ("check if we can find a student by number", () => {
     const student = database.findPerson(studentExample.studentNumber, "studentNumber", 
         {
             fileName: database.studentsFile,
-            personType: "students"
+            personType: database.types.students
         });
 
     expect(student.firstName).toBe(studentExample.firstName)
@@ -82,7 +81,7 @@ test ("check if we can find a prof by number", () => {
     const prof = database.findPerson(profExample.profNumber, "profNumber", 
         {
             fileName: database.profsFile,
-            personType: "profs"
+            personType: database.types.profs
         });
 
     expect(prof.firstName).toBe(profExample.firstName)
@@ -94,7 +93,7 @@ test ("check if we get undefined when we search for a non existing student", () 
     const student = database.findPerson("0", "studentNumber", 
         {
             fileName: database.studentsFile,
-            personType: "students"
+            personType: database.types.students
         });
 
     expect(student).toBeUndefined();
@@ -106,7 +105,7 @@ test ("check if we get undefined when we search for a non existing prof", () => 
     const prof = database.findPerson("0", "profNumber", 
         {
             fileName: database.profsFile,
-            personType: "profs"
+            personType: database.types.profs
         });
 
     expect(prof).toBeUndefined();
@@ -118,7 +117,7 @@ test ("check if we get undefined when we search for a non existing exception", (
     const exception = database.findPerson("0", "exceptionNumber", 
         {
             fileName: database.exceptionsFile,
-            personType: "exceptions"
+            personType: database.types.exceptions
         });
 
     expect(exception).toBeUndefined();
@@ -141,8 +140,8 @@ test ("check if we get a prof when we search for a prof", () => {
 test ("check if we get a exception when we search for a exception", () => {
     expect.assertions(1);
 
-    const exception = database.searchWholeDatabase(exceptionExample.cardNumber);
-    expect(exception.firstName).toBe(exceptionExample.firstName)
+    const exception = database.searchWholeDatabase(exceptionExample2.cardNumber);
+    expect(exception.firstName).toBe(exceptionExample2.firstName)
 });
 
 test ("check if we get undefined when we search for a non existing person", () => {
