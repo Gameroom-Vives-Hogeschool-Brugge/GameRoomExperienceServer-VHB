@@ -5,6 +5,13 @@ const excelParser = require('./excelParser.js');
 const db = require('./database.js');
 const app = express();
 const cors = require('cors');
+const crypto = require('crypto');
+const sendEmail = require('./utils/email');
+const dotenv = require("dotenv");
+
+dotenv.config({
+    path: "./keys.env"
+});
 
 const corsOptions = {
     origin: ["http://localhost:5173"],
@@ -120,6 +127,44 @@ app.post('/registrations', (req, res) => {
 app.get("/started", (req, res) => {
     res.status(200);
     res.send("Server is running");
+})
+
+app.post("/email", async (req, res) => {
+    try {
+        const database = new db();
+        let token = crypto.randomBytes(32).toString('hex');
+        let user = database.searchWholeDatabase(req.body.cardNumber);
+        if (!user) return res.status(404).send('User Could not be found');
+
+        let tokenAdded = database.addToken(user, token);
+        if (!tokenAdded) return res.status(500).send('Token could not be added');
+
+        const message = `${process.env.BASE_URL}/user/verify/${user.cardNumber}/${token}`;
+        await sendEmail(user.email, "Verify Email", message);
+
+    res.send("An Email sent to your account please verify");
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Something went wrong');
+    }
+})
+
+app.get("/user/verify/:cardNumber/:token", async (req, res) => {
+    try {
+        const database = new db();
+        let token = database.findToken(req.params.cardNumber);
+        if (!token) return res.status(404).send('Token Could not be found');
+
+        if (token !== req.params.token) return res.status(401).send('Invalid Token');
+
+        let verified = database.verifyUser(req.params.cardNumber);
+        if (!verified) return res.status(500).send('User could not be verified');
+
+        res.status(200).send('User has been verified');
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Something went wrong');
+    }
 })
 
 app.listen(port, () => {

@@ -1,6 +1,6 @@
 const e = require('express');
 const db = require('./database');
-const exampleFile = require('./storage/examples.json');
+const exampleFile = require('./examples/examples.json');
 let database = undefined;
 
 const studentExample = exampleFile.examples.studentExample
@@ -11,6 +11,14 @@ const exceptionExample2 = exampleFile.examples.exceptionExample2
 
 beforeAll(() => {
     database = new db();
+    database.studentsFile = require("./examples/registeredStudents.json");
+    database.exceptionsFile = require("./examples/registeredExceptions.json");
+    database.profsFile = require("./examples/registeredProfs.json");
+    database.routes = {
+        students: "./examples/registeredStudents.json",
+        profs: "./examples/registeredProfs.json",
+        exceptions: "./examples/registeredExceptions.json"
+    }
 });
 
 test ("check if the files exists", () => {
@@ -151,8 +159,80 @@ test ("check if we get undefined when we search for a non existing person", () =
     expect(person).toBeUndefined();
 });
 
+test("add token for a student", () => {
+    expect.assertions(2);
+    
+    const token = "abc123";
+    const result = database.addToken(studentExample, token);
 
+    expect(result).toBe(true);
 
+    const student = database.searchWholeDatabase(studentExample.cardNumber);
+    expect(student.token).toBe(token);
+});
 
+test("add token for a prof", () => {
+    expect.assertions(2);
 
+    const token = "xyz789";
+    const result = database.addToken(profExample, token);
+
+    expect(result).toBe(true);
+
+    const prof = database.searchWholeDatabase(profExample.cardNumber);
+    expect(prof.token).toBe(token);
+});
+
+test("add token for an exception", () => {
+    expect.assertions(2);
+
+    const token = "123xyz";
+    const result = database.addToken(exceptionExample, token);
+
+    expect(result).toBe(true);
+
+    const exception = database.searchWholeDatabase(exceptionExample.cardNumber);
+    expect(exception.token).toBe(token);
+});
+
+test("check if we can find a token by card number", () => {
+    expect.assertions(1);
+
+    const student = studentExample;
+    const expectedToken = "abc123";
+    database.addToken(student, expectedToken);
+
+    const token = database.findToken(student.cardNumber);
+
+    expect(token).toBe(expectedToken);
+});
+
+test ("check if we get false when the wrong card number tries to validate", () => {
+    expect.assertions(1);
+
+    const student = studentExample;
+    const expectedToken = "abc123";
+    database.addToken(student, expectedToken);
+
+    const wrongCardNumber = "0";
+    const token = database.findToken(wrongCardNumber);
+    expect(token).toBe(undefined);
+});
+
+test ("check if we get an error when we try to verify a non existing person", () => {
+    expect.assertions(1);
+
+    const result = database.verifyUser("0");
+    expect(result).toBe(false);
+});
+
+test ("check if we can verify a student", () => {
+    expect.assertions(1);
+
+    const expectedToken = "abc123";
+    database.addToken(studentExample, expectedToken);
+
+    const result = database.verifyUser(studentExample.cardNumber);
+    expect(result).toBe(true);
+});
 

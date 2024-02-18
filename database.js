@@ -3,6 +3,11 @@ module.exports = class Database {
         this.studentsFile = require("./storage/registeredStudents.json");
         this.exceptionsFile = require("./storage/registeredExceptions.json");
         this.profsFile = require("./storage/registeredProfs.json");
+        this.routes = {
+            students: "./storage/registeredStudents.json",
+            profs: "./storage/registeredProfs.json",
+            exceptions: "./storage/registeredExceptions.json"
+        }
         this.types = {
             students: "students",
             profs: "profs",
@@ -78,7 +83,7 @@ module.exports = class Database {
             jsonObject = this.studentsFile;
             jsonObject.students.push(registeredStudent);
 
-            fileRoute = "./storage/registeredStudents.json";
+            fileRoute = this.routes.students;
         } else if (type === this.types.profs) {
             const registeredProf = {
                 "profNumber": person.Prof,
@@ -93,7 +98,7 @@ module.exports = class Database {
             jsonObject = this.profsFile;
             jsonObject.profs.push(registeredProf);
     
-            fileRoute = "./storage/registeredProfs.json";
+            fileRoute = this.routes.profs;
         } else if (type === this.types.exceptions) {
             const registeredException = {
                 "studentNumber": person.Student,
@@ -108,11 +113,104 @@ module.exports = class Database {
             jsonObject = this.exceptionsFile;
             jsonObject.exceptions.push(registeredException);
 
-            fileRoute = "./storage/registeredExceptions.json";
+            fileRoute = this.routes.exceptions;
         }
 
         fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
             if (err) {
+                succes = false;
+            }
+        });
+
+        return succes;
+    }
+
+    addToken = (user, token) => {
+        const fs = require("fs");
+        let succes = true;
+
+        const person = this.searchWholeDatabase(user.cardNumber);
+
+        console.log(person);
+
+        let jsonObject = {};
+        let fileRoute = "";
+
+        try {
+            switch (person.type) {
+                case "Student":
+                    jsonObject = this.studentsFile;
+                    jsonObject.students.find(student => student.cardNumber === user.cardNumber).verified = false;
+                    jsonObject.students.find(student => student.cardNumber === user.cardNumber).token = token;
+                    fileRoute = this.routes.students;
+                    break;
+                case "Prof":
+                    jsonObject = this.profsFile;
+                    jsonObject.profs.find(prof => prof.cardNumber === user.cardNumber).verified = false;
+                    jsonObject.profs.find(prof => prof.cardNumber === user.cardNumber).token = token;
+                    fileRoute = this.routes.profs;
+                    break;
+                case "Exception":
+                    jsonObject = this.exceptionsFile;
+                    jsonObject.exceptions.find(exception => exception.cardNumber === user.cardNumber).verified = false;
+                    jsonObject.exceptions.find(exception => exception.cardNumber === user.cardNumber).token = token;
+                    fileRoute = this.routes.exceptions;
+                    break;
+            }
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+
+        fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
+            if (err) {
+                console.log(err);
+                succes = false;
+            }
+        });
+
+        return succes;
+    }
+
+    findToken = (cardNumber) => {
+        const person = this.searchWholeDatabase(cardNumber);
+        return person ? person.token : undefined;
+    }
+
+    verifyUser = (cardNumber) => {
+        const fs = require("fs");
+        let succes = true;
+
+        const person = this.searchWholeDatabase(cardNumber);
+
+        let jsonObject = {};
+        let fileRoute = "";
+
+        try {
+            switch (person.type) {
+                case "Student":
+                    jsonObject = this.studentsFile;
+                    jsonObject.students.find(student => student.cardNumber === cardNumber).verified = true;
+                    fileRoute = this.routes.students;
+                    break;
+                case "Prof":
+                    jsonObject = this.profsFile;
+                    jsonObject.profs.find(prof => prof.cardNumber === cardNumber).verified = true;
+                    fileRoute = this.routes.profs;
+                    break;
+                case "Exception":
+                    jsonObject = this.exceptionsFile;
+                    jsonObject.exceptions.find(exception => exception.cardNumber === cardNumber).verified = true;
+                    fileRoute = this.routes.exceptions;
+                    break;
+            }
+        } catch (error) {
+            return false;
+        }
+
+        fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
+            if (err) {
+                console.log(err);
                 succes = false;
             }
         });

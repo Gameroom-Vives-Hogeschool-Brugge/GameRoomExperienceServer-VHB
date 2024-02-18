@@ -144,11 +144,13 @@ dist
 
 #excelfiles
 storage/*.xlsx
+examples/*.xlsx
 
 #Dockerfile
 Dockerfile
 
 #storage json files
 storage/*.json
+examples/*.json
 
 # End of https://www.toptal.com/developers/gitignore/api/node
