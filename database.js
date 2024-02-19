@@ -69,63 +69,68 @@ module.exports = class Database {
         let jsonObject = {};
         let fileRoute = "";
 
-        if (type === this.types.students) {
-            const registeredStudent = {
+        try {
+            if (type === this.types.students) {
+                const registeredStudent = {
+                        "studentNumber": person.Student,
+                        "cardNumber": "XXXXXX",
+                        "firstName": person.Voornaam,
+                        "lastName": person.Familienaam,
+                        "email": person["E-mailadres"],
+                        "course": person.Opleiding,
+                        "role": "Student",
+                        "type": "Student",
+                        "verified": false,
+                        "token": ""
+                }
+
+                jsonObject = this.studentsFile;
+                jsonObject.students.push(registeredStudent);
+
+                fileRoute = this.routes.students;
+            } else if (type === this.types.profs) {
+                const registeredProf = {
+                    "profNumber": person.Prof,
+                    "cardNumber": "",
+                    "firstName": person.Voornaam,
+                    "lastName": person.Familienaam,
+                    "email": person["E-mailadres"],
+                    "course": "Not Applicable",
+                    "role": "Prof",
+                    "type": "Prof",
+                    "verified": false,
+                    "token": ""
+                }
+
+                jsonObject = this.profsFile;
+                jsonObject.profs.push(registeredProf);
+        
+                fileRoute = this.routes.profs;
+            } else if (type === this.types.exceptions) {
+                const registeredException = {
                     "studentNumber": person.Student,
-                    "cardNumber": "XXXXXX",
+                    "cardNumber": "",
                     "firstName": person.Voornaam,
                     "lastName": person.Familienaam,
                     "email": person["E-mailadres"],
                     "course": person.Opleiding,
                     "role": "Student",
-                    "type": "Student",
+                    "type": "Exception",
                     "verified": false,
                     "token": ""
             }
 
-            jsonObject = this.studentsFile;
-            jsonObject.students.push(registeredStudent);
+                jsonObject = this.exceptionsFile;
+                jsonObject.exceptions.push(registeredException);
 
-            fileRoute = this.routes.students;
-        } else if (type === this.types.profs) {
-            const registeredProf = {
-                "profNumber": person.Prof,
-                "cardNumber": "",
-                "firstName": person.Voornaam,
-                "lastName": person.Familienaam,
-                "email": person["E-mailadres"],
-                "course": "Not Applicable",
-                "role": "Prof",
-                "type": "Prof",
-                "verified": false,
-                "token": ""
+                fileRoute = this.routes.exceptions;
             }
-
-            jsonObject = this.profsFile;
-            jsonObject.profs.push(registeredProf);
-    
-            fileRoute = this.routes.profs;
-        } else if (type === this.types.exceptions) {
-            const registeredException = {
-                "studentNumber": person.Student,
-                "cardNumber": "",
-                "firstName": person.Voornaam,
-                "lastName": person.Familienaam,
-                "email": person["E-mailadres"],
-                "course": person.Opleiding,
-                "role": "Student",
-                "type": "Exception",
-                "verified": false,
-                "token": ""
+        } catch (error) {
+            console.log(error);
+            return false;
         }
 
-            jsonObject = this.exceptionsFile;
-            jsonObject.exceptions.push(registeredException);
-
-            fileRoute = this.routes.exceptions;
-        }
-
-        fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
+        fs.writeFileSync(fileRoute, JSON.stringify(jsonObject), (err) => {
             if (err) {
                 succes = false;
             }

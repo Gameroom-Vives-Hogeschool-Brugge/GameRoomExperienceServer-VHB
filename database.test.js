@@ -245,6 +245,7 @@ test("add a student to the database", () => {
         Familienaam: "Leemdonck",
         "E-mailadres": "bert.leemdonck@student.vives.be",
         Opleiding: "PBA Elektronica-ICT (Brugge)",
+        Hoofdlocatie: "Brugge"
     }
     const result = database.addPerson(person, database.types.students);
 

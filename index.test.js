@@ -71,7 +71,6 @@ test ("check if login sends 298 cod when a prof is found", async () => {
     //untestable at the moment due to insufficient cardnumbers
 });
 
-
 test("check if calling registrations with a correct person returns 202", async () => {
     expect.assertions(1);
 

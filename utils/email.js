@@ -12,8 +12,7 @@ const sendEmail = async (email, subject, text) => {
             pass: process.env.PASS,
         },
     }
-
-    console.log(transportConfig);
+    
     const transporter = nodemailer.createTransport(transportConfig);
 
     await transporter.sendMail({
@@ -28,5 +27,7 @@ const sendEmail = async (email, subject, text) => {
     console.log(error);
   }
 };
+
+
 
 module.exports = sendEmail;
