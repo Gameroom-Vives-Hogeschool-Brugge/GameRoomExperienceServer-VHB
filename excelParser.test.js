@@ -4,7 +4,7 @@ let parser = undefined;
 
 beforeAll(() => {
     excelParser = require('./excelParser');
-    file = "./storage/testFile.xlsx";
+    file = "./examples/testFile.xlsx";
     parser = new excelParser(file);
 });
 
@@ -58,4 +58,30 @@ test("check if the giveTheNamesFromAllRegistrations works", () => {
 
     expect(firstName).toBe("Dimitri");
     expect(lastName).toBe("Starkov");
+});
+
+test("check if findPersonInRegistrations returns the correct person", () => {
+    const registrations = parser.giveAllRegistrationsInJSON();
+
+    const person = {
+        firstName: "Olivier",
+        lastName: "Van Ransbeeck"
+      }
+
+    const result = parser.findPersonInRegistrations(person, registrations);
+
+    expect(result.Student).toEqual('0957797');
+});
+
+test("check if findPersonInRegistrations returns undefined if person is not found", () => {
+    const registrations = parser.giveAllRegistrationsInJSON();
+
+    const person = {
+        firstName: "xxxx",
+        lastName: "yyyy"
+      }
+
+    const result = parser.findPersonInRegistrations(person, registrations);
+
+    expect(result).toBeUndefined();
 });

@@ -72,12 +72,15 @@ module.exports = class Database {
         if (type === this.types.students) {
             const registeredStudent = {
                     "studentNumber": person.Student,
-                    "cardNumber": "",
+                    "cardNumber": "XXXXXX",
                     "firstName": person.Voornaam,
                     "lastName": person.Familienaam,
                     "email": person["E-mailadres"],
                     "course": person.Opleiding,
-                    "role": "Student"
+                    "role": "Student",
+                    "type": "Student",
+                    "verified": false,
+                    "token": ""
             }
 
             jsonObject = this.studentsFile;
@@ -92,7 +95,10 @@ module.exports = class Database {
                 "lastName": person.Familienaam,
                 "email": person["E-mailadres"],
                 "course": "Not Applicable",
-                "role": "Prof"
+                "role": "Prof",
+                "type": "Prof",
+                "verified": false,
+                "token": ""
             }
 
             jsonObject = this.profsFile;
@@ -107,7 +113,10 @@ module.exports = class Database {
                 "lastName": person.Familienaam,
                 "email": person["E-mailadres"],
                 "course": person.Opleiding,
-                "role": "Student"
+                "role": "Student",
+                "type": "Exception",
+                "verified": false,
+                "token": ""
         }
 
             jsonObject = this.exceptionsFile;
@@ -130,8 +139,6 @@ module.exports = class Database {
         let succes = true;
 
         const person = this.searchWholeDatabase(user.cardNumber);
-
-        console.log(person);
 
         let jsonObject = {};
         let fileRoute = "";
@@ -162,7 +169,7 @@ module.exports = class Database {
             return false;
         }
 
-        fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
+        fs.writeFileSync(fileRoute, JSON.stringify(jsonObject), (err) => {
             if (err) {
                 console.log(err);
                 succes = false;
@@ -205,10 +212,11 @@ module.exports = class Database {
                     break;
             }
         } catch (error) {
+            console.log(error)
             return false;
         }
 
-        fs.writeFile(fileRoute, JSON.stringify(jsonObject), (err) => {
+        fs.writeFileSync(fileRoute, JSON.stringify(jsonObject), (err) => {
             if (err) {
                 console.log(err);
                 succes = false;

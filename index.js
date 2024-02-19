@@ -88,12 +88,7 @@ app.get('/registrations', (req, res) => {
     parser = new excelParser(file);
     const registrations = parser.giveAllRegistrationsInJSON();
     const bruggeRegistrations = parser.removeAllRegistrationNotFromBrugge(registrations);
-
-    //console.log(bruggeRegistrations);
-
-    //check if names are already in the database and remove them from the list
     const names = parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
-
 
     res.header("Access-Control-Allow-Origin", "*");
     res.send(names);
@@ -102,11 +97,11 @@ app.get('/registrations', (req, res) => {
 app.post('/registrations', (req, res) => {
     const file = "./storage/StudentList.xlsx";
     const parser = new excelParser(file);
-
     const database = new db();
 
     const registrations = parser.giveAllRegistrationsInJSON();
     const registeredPerson = req.body;
+    console.log(registeredPerson)
     const personFound = parser.findPersonInRegistrations(registeredPerson, registrations);
     
     if (personFound) {

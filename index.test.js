@@ -1,7 +1,7 @@
 const server = require('./index.js');
 const request = require('supertest');
 const dotenv = require("dotenv");
-const exampleFile = require('./storage/examples.json');
+const exampleFile = require('./examples/examples.json');
 
 dotenv.config({
     path: "./keys.env"
@@ -9,6 +9,8 @@ dotenv.config({
 
 let studenKortrijkUrl = process.env.STUDENT_KORTRIJK_URL;
 const studentExample = exampleFile.examples.studentExample
+const studentExample2 = exampleFile.examples.studentExample2
+const studentExample3 = exampleFile.examples.studentExample3
 const profExample = exampleFile.examples.profExample
 const exceptionExample = exampleFile.examples.exceptionExample
 const exceptionExample2 = exampleFile.examples.exceptionExample2
@@ -70,6 +72,18 @@ test ("check if login sends 298 cod when a prof is found", async () => {
 });
 
 
+test("check if calling registrations with a correct person returns 202", async () => {
+    expect.assertions(1);
 
+    const response = await request(server.app).post('/registrations').send({person: studentExample3});
 
+    expect(response.statusCode).toBe(202);
+});
 
+test("check if calling registrations with a failing to find a person returns 404", async () => {
+    expect.assertions(1);
+
+    const response = await request(server.app).post('/registrations').send({person: {}});
+
+    expect(response.statusCode).toBe(404);
+});

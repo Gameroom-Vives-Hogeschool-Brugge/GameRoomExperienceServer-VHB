@@ -236,3 +236,20 @@ test ("check if we can verify a student", () => {
     expect(result).toBe(true);
 });
 
+test("add a student to the database", () => {
+    expect.assertions(2);
+
+    const person =  {
+        Student: "00002332",
+        Voornaam: "Bert",
+        Familienaam: "Leemdonck",
+        "E-mailadres": "bert.leemdonck@student.vives.be",
+        Opleiding: "PBA Elektronica-ICT (Brugge)",
+    }
+    const result = database.addPerson(person, database.types.students);
+
+    expect(result).toBe(true);
+
+    const foundPerson = database.searchWholeDatabase("XXXXXX")
+    expect(foundPerson.studentNumber).toBe("00002332")
+});

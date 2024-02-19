@@ -9,6 +9,7 @@
     "testDatabase": "jest --setupFiles dotenv/config --testPathPattern=database",
     "testScraper": "jest --setupFiles dotenv/config --testPathPattern=scraper",
     "testServer": "jest --setupFiles dotenv/config --testPathPattern=index",
+    "testParser": "jest --setupFiles dotenv/config --testPathPattern=parser",
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",
     "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb"
