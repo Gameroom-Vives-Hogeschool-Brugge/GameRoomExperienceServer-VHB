@@ -147,6 +147,13 @@ app.get("/user/verify/:cardNumber/:token", async (req, res) => {
     }
 })
 
+app.post('/opendoor', async (req,res)=> {   
+    //wait for 2 seconds then send a response
+    setTimeout(() => {
+        return res.status(200).send("Door opened");
+    }, 2000); 
+})
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
