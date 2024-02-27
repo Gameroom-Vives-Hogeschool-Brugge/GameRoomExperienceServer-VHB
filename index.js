@@ -212,6 +212,22 @@ app.post('/opendoor', async (req,res)=> {
     }, 2000); 
 })
 
+app.get('/rooms', async (req, res) => {
+    const mongo = new MongoDatabase();
+    const dbName = mongo.dbStructure.RoomsData.dbName;
+    const roomsCollection = mongo.dbStructure.RoomsData.rooms;
+    const rooms = await mongo.getAllDocuments(dbName, roomsCollection);
+    res.status(200).send(rooms);
+})
+
+app.get('/reservations', async (req, res) => {
+    const mongo = new MongoDatabase();
+    const dbName = mongo.dbStructure.RoomsData.dbName;
+    const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+    const reservations = await mongo.getAllDocuments(dbName, reservationsCollection);
+    res.status(200).send(reservations);
+})
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })

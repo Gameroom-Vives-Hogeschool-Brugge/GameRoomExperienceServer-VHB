@@ -18,8 +18,8 @@ module.exports = class MongoDatabase {
         this.dbStructure = {
             RoomsData: {
                 dbName: "RoomsData",
-                rooms: "rooms",
-                reservations: "reservations"
+                rooms: "Rooms",
+                reservations: "Reservations"
             },
             UserData: {
                 dbName: "UserData",
@@ -42,12 +42,12 @@ module.exports = class MongoDatabase {
           }
     }
 
-    getAllUsers = async () => {
+    getAllDocuments = async (dbName, collection) => {
         let result = undefined;
 
         try {
             await this.mongoClient.connect();
-            result = await this.mongoClient.db(this.dbStructure.UserData.dbName).collection("users").find({}).toArray();
+            result = await this.mongoClient.db(dbName).collection(collection).find({}).toArray();
         } catch (err) {
             throw err;
         }finally {
