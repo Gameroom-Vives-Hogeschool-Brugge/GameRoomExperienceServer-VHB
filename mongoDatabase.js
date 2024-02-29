@@ -188,9 +188,4 @@ module.exports = class MongoDatabase {
 
         return user;
     }
-
-    createToken = () => {
-        const crypto = require("crypto");
-        return crypto.randomBytes(32).toString('hex');
-    }
 }

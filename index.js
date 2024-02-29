@@ -7,6 +7,7 @@ const cors = require('cors');
 const sendEmail = require('./utils/email');
 const dotenv = require("dotenv");
 const MongoDatabase = require('./mongoDatabase');
+const Encryptor = require('./utils/encryptor');
 
 dotenv.config({
     path: "./keys.env"
@@ -23,10 +24,19 @@ app.use(bodyParser.json())
 
 const port = 3000
 
+app.post('/test', async (req,res) => {
+    res.status(200).send("Test succeeded");
+})
+
 app.post('/login', async (req, res) => {
+    //create a new instance of the required classes
     const mongo = new MongoDatabase();
     scraper = new urlScraper();
-    const url = req.body.link;
+    const encryptor = new Encryptor();
+
+    //decrypt the data
+    const encryptedurl = req.body.encryptedLink;
+    const url = encryptor.decrypt(encryptedurl);
     
     //change the header to allow all origins, NEEDS TO BE CHANGED TO ALLOW ONLY THE FRONTEND URL
     res.header("Access-Control-Allow-Origin", "*");
@@ -53,14 +63,18 @@ app.post('/login', async (req, res) => {
         const role = roleObject.role;
 
         //send data to frontend
-        dataToBeSend = {
+        const dataToBeSend = {
             firstName: personFound.firstName, 
             lastName: personFound.lastName, 
             id: personFound.studentNumber,
             type: type,
             role: role
         }
-        return res.status(297).send(dataToBeSend); // voor verwijzing naar persoonlijke pagina
+
+        //encrypt the data and send it to the frontend
+        const encryptedObject = encryptor.encryptObject(dataToBeSend);
+
+        return res.status(297).send(encryptedObject); // voor verwijzing naar persoonlijke pagina
     }
 
     if (personFound && !personFound.verified) {
@@ -81,14 +95,18 @@ app.post('/login', async (req, res) => {
         const studentFound = await scraper.findElement(page, scraper.studentXPath);
         const profFound = await scraper.findElement(page, scraper.profXPath);
 
+        console.log("Student Found" + studentFound);
+
         //if the cardnumber is a student, check if the student is from Brugge
         if (studentFound == "Student") {
             const placeFound = await scraper.findElement(page, scraper.locationXPath);
             await scraper.browser.close();
 
+            console.log("Place Found" + placeFound);
+
             //check if the student is from Brugge, otherwise send an error
             if (placeFound == "Kortrijk") { //Needs to be changed to Brugge
-                return res.status(299).send(cardNumber); //Voor verwijzing naar registratiepagina
+                return res.status(299).send(""); //Voor verwijzing naar registratiepagina
             } else {
                 return res.status(401).send("Not a Valid Student or Prof"); //Needs to be changed to Brugge and for Error message
             }
@@ -107,13 +125,23 @@ app.post('/login', async (req, res) => {
 })
 
 app.get('/registrations', (req, res) => {
+    //create a new instance of the required classes
     const file = "./storage/StudentList.xlsx";
-    parser = new excelParser(file);
+    const parser = new excelParser(file);
+    const encryptor = new Encryptor();
+
+    //change the header to allow all origins, NEEDS TO BE CHANGED TO ALLOW ONLY THE FRONTEND URL
+    res.header("Access-Control-Allow-Origin", "*");
+
+    //get all registrations from the excel file, remove the students not from Brugge, give me only the names and send them to the frontend
     const registrations = parser.giveAllRegistrationsInJSON();
     const bruggeRegistrations = parser.removeAllRegistrationNotFromBrugge(registrations);
     const names = parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
 
-    return res.header("Access-Control-Allow-Origin", "*").send(names);
+    //encrypt the data and send it to the frontend
+    const encryptedObject = encryptor.encryptObject(names);
+
+    return res.send(encryptedObject);
 })
 
 app.post('/registrations', async (req, res) => {
@@ -146,7 +174,7 @@ app.post('/registrations', async (req, res) => {
                 if (!user) return res.status(404).send('User Could not be found');
                 
                 //create token and add it to the user
-                const token = mongo.createToken();
+                const token = cryptor.createToken();
                 let tokenAdded = await mongo.updateDocument({_id: user._id}, {$set: {token: token}}, mongo.dbStructure.UserData.dbName, mongo.dbStructure.UserData.users);
 
                 //check if token has been added, otherwise send an error

@@ -11,6 +11,7 @@
     "testServer": "jest --setupFiles dotenv/config --testPathPattern=index",
     "testParser": "jest --setupFiles dotenv/config --testPathPattern=parser",
     "testMongo": "jest --setupFiles dotenv/config --testPathPattern=mongoDatabase",
+    "testEncryptor": "jest --setupFiles dotenv/config --testPathPattern=encryptor",
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",
     "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb"
@@ -22,6 +23,7 @@
     "body-parser": "^1.20.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "jest": "^29.7.0",
