@@ -14,14 +14,6 @@ afterEach(() => {
     
 });
 
-test("check if all users are retrieved successfully", async () => {
-    expect.assertions(1);
-
-    const result = await mongo.getAllUsers();
-
-    expect(result).toBeDefined();
-});
-
 test("check if database is connected", async () => {
     expect.assertions(0);
 

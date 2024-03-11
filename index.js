@@ -77,6 +77,7 @@ app.post('/login', async (req, res) => {
         return res.status(297).send(encryptedObject); // voor verwijzing naar persoonlijke pagina
     }
 
+    //check if user exists and is not verified, otherwise send an error
     if (personFound && !personFound.verified) {
         return res.status(296).send("User not verified");
     }
@@ -86,23 +87,30 @@ app.post('/login', async (req, res) => {
     const cardNumberFound = await scraper.findElement(page, scraper.noCardNumberXPath);
     
     //check if cardnumber is found, otherwise send an error
-    if ((cardNumberFound == scraper.cardNotFoundMessage) || (cardNumberFound == scraper.falseCardMessage)) {
+    if ((cardNumberFound == scraper.cardNotFoundMessage) || (cardNumberFound == scraper.falseCardMessage) || (cardNumberFound == scraper.serverErrorMessage)) {
         await scraper.browser.close();
-        return res.status(404).send("Card not found or invalid card number.");
+
+        //send an error message based on the cardnumber found
+        switch (cardNumberFound) {
+            case scraper.cardNotFoundMessage:
+                return res.status(404).send("Card not found.");
+            case scraper.falseCardMessage:
+                return res.status(401).send("Invalid card number.");
+            case scraper.serverErrorMessage:
+                return res.status(500).send("Internal Server Error. Please try again later.");
+            default:
+                return res.status(500).send("Internal Server Error. Please try again later.");
+        }
     } else {
 
         //check if the cardnumber is a student or a prof
         const studentFound = await scraper.findElement(page, scraper.studentXPath);
         const profFound = await scraper.findElement(page, scraper.profXPath);
 
-        console.log("Student Found" + studentFound);
-
         //if the cardnumber is a student, check if the student is from Brugge
         if (studentFound == "Student") {
             const placeFound = await scraper.findElement(page, scraper.locationXPath);
             await scraper.browser.close();
-
-            console.log("Place Found" + placeFound);
 
             //check if the student is from Brugge, otherwise send an error
             if (placeFound == "Kortrijk") { //Needs to be changed to Brugge
@@ -148,6 +156,7 @@ app.post('/registrations', async (req, res) => {
     const file = "./storage/StudentList.xlsx";
     const parser = new excelParser(file);
     const mongo = new MongoDatabase();
+    const encryptor = new Encryptor();
 
     //get data from the request
     const cardNumber = req.body.cardNumber;
@@ -174,7 +183,7 @@ app.post('/registrations', async (req, res) => {
                 if (!user) return res.status(404).send('User Could not be found');
                 
                 //create token and add it to the user
-                const token = cryptor.createToken();
+                const token = encryptor.createToken();
                 let tokenAdded = await mongo.updateDocument({_id: user._id}, {$set: {token: token}}, mongo.dbStructure.UserData.dbName, mongo.dbStructure.UserData.users);
 
                 //check if token has been added, otherwise send an error
