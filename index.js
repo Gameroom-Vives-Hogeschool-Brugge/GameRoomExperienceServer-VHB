@@ -8,6 +8,7 @@ const sendEmail = require('./utils/email');
 const dotenv = require("dotenv");
 const MongoDatabase = require('./mongoDatabase');
 const Encryptor = require('./utils/encryptor');
+const EmailParser = require('./utils/emailParser');
 
 dotenv.config({
     path: "./keys.env"
@@ -25,6 +26,8 @@ app.use(bodyParser.json())
 const port = 3000
 
 app.post('/test', async (req,res) => {
+    const emailParser = new EmailParser();
+    await emailParser.fetchAttachments();
     res.status(200).send("Test succeeded");
 })
 
@@ -33,6 +36,10 @@ app.post('/login', async (req, res) => {
     const mongo = new MongoDatabase();
     scraper = new urlScraper();
     const encryptor = new Encryptor();
+    const emailParser = new EmailParser();
+
+    //check if a new Studentlist has been sent
+    //await emailParser.fetchEmails();
 
     //decrypt the data
     const encryptedurl = req.body.encryptedLink;
@@ -262,6 +269,19 @@ app.get('/reservations', async (req, res) => {
     const dbName = mongo.dbStructure.RoomsData.dbName;
     const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
     const reservations = await mongo.getAllDocuments(dbName, reservationsCollection);
+
+    for (let i = 0; i < reservations.length; i++) {
+        const user = await mongo.getOnedocumentByFilter({_id: reservations[i].user}, mongo.dbStructure.UserData.dbName, mongo.dbStructure.UserData.users);
+        reservations[i].user = {
+            idNumber: user.idNumber,
+            firstName: user.firstName,
+            lastName: user.lastName,
+        };
+
+        const room = await mongo.getOnedocumentByFilter({_id: reservations[i].room}, mongo.dbStructure.RoomsData.dbName, mongo.dbStructure.RoomsData.rooms);
+        reservations[i].room = room;
+    }
+
     res.status(200).send(reservations);
 })
 
@@ -270,6 +290,3 @@ app.listen(port, () => {
 })
 
 module.exports.app = app
-
-
-
