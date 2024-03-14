@@ -1,6 +1,6 @@
 //import environment variables
 const dotenv = require("dotenv");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 dotenv.config({
     path: "./keys.env"
@@ -187,5 +187,21 @@ module.exports = class MongoDatabase {
         }
 
         return user;
+    }
+
+    //userId must be a string like: '65ddc48fe28da42a3388ebd8'
+    //roomId must be a string like: '65e5c77581846d9b55a37167'
+    //date must be a string: "2024-03-15T08:00:00.000Z"
+    //duration must be a number: 3
+    createReservationDocument = async (userId, roomId, date, duration) => {
+        //create reservation object
+        const reservation = {
+            room: new ObjectId(roomId),
+            duration: duration,
+            user: new ObjectId(userId),
+            date: new Date(date),
+        }
+
+           return reservation;
     }
 }
