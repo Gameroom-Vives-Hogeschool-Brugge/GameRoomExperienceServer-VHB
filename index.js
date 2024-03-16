@@ -326,18 +326,29 @@ app.get("/rooms", async (req, res) => {
 
 app.get("/reservations", async (req, res) => {
   const mongo = new MongoDatabase();
-  const dbName = mongo.dbStructure.RoomsData.dbName;
+
+  //get the names of the databases and collections
+  const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
+  const usersDataDbName = mongo.dbStructure.UserData.dbName;
   const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
-  const reservations = await mongo.getAllDocuments(
-    dbName,
+  const roomsCollection = mongo.dbStructure.RoomsData.rooms;
+  const usersCollection = mongo.dbStructure.UserData.users;
+
+  //give all the reservations for today midnight and later
+  const midnightToday = new Date(new Date().setHours(0, 0, 0, 0));
+  const reservations = await mongo.getDocumentsByFilter(
+    { date: { $gte: midnightToday } },
+    roomsDatadbName,
     reservationsCollection
   );
 
   for (let i = 0; i < reservations.length; i++) {
+    const userId = new mongodb.ObjectId(reservations[i].user);
+
     const user = await mongo.getOnedocumentByFilter(
-      { _id: reservations[i].user },
-      mongo.dbStructure.UserData.dbName,
-      mongo.dbStructure.UserData.users
+      { _id: userId },
+      usersDataDbName,
+      usersCollection
     );
     reservations[i].user = {
       idNumber: user.idNumber,
@@ -345,10 +356,12 @@ app.get("/reservations", async (req, res) => {
       lastName: user.lastName,
     };
 
+    const roomId = new mongodb.ObjectId(reservations[i].room);
+
     const room = await mongo.getOnedocumentByFilter(
-      { _id: reservations[i].room },
-      mongo.dbStructure.RoomsData.dbName,
-      mongo.dbStructure.RoomsData.rooms
+      { _id: roomId },
+      roomsDatadbName,
+      roomsCollection
     );
     reservations[i].room = room;
   }
@@ -434,20 +447,23 @@ app.post("/myReservations", async(req, res) => {
   const mongo = new MongoDatabase();
 
   const userId = new mongodb.ObjectId(req.body.userId)
-  const dbName = mongo.dbStructure.RoomsData.dbName;
+  const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
   const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+  const roomsCollection = mongo.dbStructure.RoomsData.rooms;
 
+  //give all the reservations for that user for today midnight and later
+  const midnightToday = new Date(new Date().setHours(0, 0, 0, 0));
   const reservations = await mongo.getDocumentsByFilter(
-    { user: userId },
-    dbName,
+    { user: userId, date: { $gte: midnightToday } },
+    roomsDatadbName,
     reservationsCollection
   );
 
   for (let i = 0; i < reservations.length; i++) {
     const room = await mongo.getOnedocumentByFilter(
       { _id: reservations[i].room },
-      mongo.dbStructure.RoomsData.dbName,
-      mongo.dbStructure.RoomsData.rooms
+      roomsDatadbName,
+      roomsCollection
     );
     reservations[i].room = room;
   }
