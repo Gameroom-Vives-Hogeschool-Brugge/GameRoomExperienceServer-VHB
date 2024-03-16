@@ -430,6 +430,31 @@ app.post("/reservations", async (req, res) => {
   }
 });
 
+app.post("/myReservations", async(req, res) => {
+  const mongo = new MongoDatabase();
+
+  const userId = new mongodb.ObjectId(req.body.userId)
+  const dbName = mongo.dbStructure.RoomsData.dbName;
+  const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+
+  const reservations = await mongo.getDocumentsByFilter(
+    { user: userId },
+    dbName,
+    reservationsCollection
+  );
+
+  for (let i = 0; i < reservations.length; i++) {
+    const room = await mongo.getOnedocumentByFilter(
+      { _id: reservations[i].room },
+      mongo.dbStructure.RoomsData.dbName,
+      mongo.dbStructure.RoomsData.rooms
+    );
+    reservations[i].room = room;
+  }
+
+  return res.status(200).send(reservations);
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
