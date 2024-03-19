@@ -443,6 +443,30 @@ app.post("/reservations", async (req, res) => {
   }
 });
 
+app.delete("/reservations", async(req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+
+  //use the reservationId only
+  const reservationId = new mongodb.ObjectId(req.body.reservationId);
+  const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+  const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
+
+  //delete the reservation
+  const deleteResponse = await mongo.deleteDocument(
+    { _id: reservationId },
+    roomsDatadbName,
+    reservationsCollection
+  );
+
+  //check if the reservation has been deleted, otherwise send an error
+  if (deleteResponse.acknowledged) {
+    return res.status(200).send("Reservation deleted");
+  } else {
+    return res.status(500).send("Reservation could not be deleted");
+  }
+})
+
 app.post("/myReservations", async(req, res) => {
   const mongo = new MongoDatabase();
 
