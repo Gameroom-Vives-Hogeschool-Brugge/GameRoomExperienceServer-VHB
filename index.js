@@ -1,3 +1,4 @@
+//imports
 const express = require("express");
 var bodyParser = require("body-parser");
 const urlScraper = require("./scraper.js");
@@ -10,26 +11,31 @@ const MongoDatabase = require("./mongoDatabase");
 const Encryptor = require("./utils/encryptor");
 const EmailParser = require("./utils/emailParser");
 const mongodb = require("mongodb");
+const e = require("express");
 
+//load cronjobs
+require("./utils/cronJobs");
+
+//load the environment variables
 dotenv.config({
   path: "./keys.env",
 });
 
+//cors options
 const corsOptions = {
   origin: ["http://localhost:5173"],
   optionsSuccessStatus: 200,
 };
 
+//middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const port = 3000;
 
+//routes
 app.post("/test", async (req, res) => {
-  const emailParser = new EmailParser();
-  await emailParser.fetchAttachments();
-  res.status(200).send("Test succeeded");
 });
 
 app.post("/login", async (req, res) => {
@@ -309,6 +315,70 @@ app.get("/user/verify/:cardNumber/:token", async (req, res) => {
   }
 });
 
+app.get("/users", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const encryptor = new Encryptor();
+
+  //get the names of the databases and collections
+  const dbName = mongo.dbStructure.UserData.dbName;
+  const usersCollection = mongo.dbStructure.UserData.users;
+
+  //get all users from the database
+  const users = await mongo.getAllDocuments(dbName, usersCollection);
+  const encryptedUsers = encryptor.encryptObject(users);
+
+  res.status(200).send(encryptedUsers);
+});
+
+app.get("/types", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const encryptor = new Encryptor();
+
+  //get the names of the databases and collections
+  const dbName = mongo.dbStructure.UserData.dbName;
+  const typesCollection = mongo.dbStructure.UserData.types;
+
+  //get all types from the database
+  const types = await mongo.getAllDocuments(dbName, typesCollection);
+  const encryptedTypes = encryptor.encryptObject(types);
+
+  res.status(200).send(encryptedTypes);
+});
+
+app.get("/roles", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const encryptor = new Encryptor();
+
+  //get the names of the databases and collections
+  const dbName = mongo.dbStructure.UserData.dbName;
+  const rolesCollection = mongo.dbStructure.UserData.roles;
+
+  //get all roles from the database
+  const roles = await mongo.getAllDocuments(dbName, rolesCollection);
+  const encryptedRoles = encryptor.encryptObject(roles);
+
+  res.status(200).send(encryptedRoles);
+});
+
+app.get("/courses", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const encryptor = new Encryptor();
+
+  //get the names of the databases and collections
+  const usersDataDbName = mongo.dbStructure.UserData.dbName;
+  const coursesCollection = mongo.dbStructure.UserData.courses;
+
+  //get all courses from the database
+  const courses = await mongo.getAllDocuments(usersDataDbName, coursesCollection);
+  const encryptedCourses = encryptor.encryptObject(courses);
+
+  res.status(200).send(encryptedCourses);
+});
+
 app.post("/opendoor", async (req, res) => {
   //wait for 2 seconds then send a response
   setTimeout(() => {
@@ -334,36 +404,35 @@ app.get("/reservations", async (req, res) => {
   const roomsCollection = mongo.dbStructure.RoomsData.rooms;
   const usersCollection = mongo.dbStructure.UserData.users;
 
-  //give all the reservations for today midnight and later
-  const midnightToday = new Date(new Date().setHours(0, 0, 0, 0));
-  const reservations = await mongo.getDocumentsByFilter(
-    { date: { $gte: midnightToday } },
+  //give all reservations
+  const reservations = await mongo.getAllDocuments(
     roomsDatadbName,
     reservationsCollection
   );
 
-  for (let i = 0; i < reservations.length; i++) {
-    const userId = new mongodb.ObjectId(reservations[i].user);
+  for (let reservation of reservations) {
+    const userId = new mongodb.ObjectId(reservation.user);
 
     const user = await mongo.getOnedocumentByFilter(
       { _id: userId },
       usersDataDbName,
       usersCollection
     );
-    reservations[i].user = {
+    reservation.user = {
+      _id: user._id,
       idNumber: user.idNumber,
       firstName: user.firstName,
       lastName: user.lastName,
     };
 
-    const roomId = new mongodb.ObjectId(reservations[i].room);
+    const roomId = new mongodb.ObjectId(reservation.room);
 
     const room = await mongo.getOnedocumentByFilter(
       { _id: roomId },
       roomsDatadbName,
       roomsCollection
     );
-    reservations[i].room = room;
+    reservation.room = room;
   }
 
   res.status(200).send(reservations);

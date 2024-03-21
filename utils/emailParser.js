@@ -99,6 +99,8 @@ class EmailParser {
                         filename
                       );
 
+                      console.log("filepath:", filePath);
+
                       fs.writeFile(filePath, attachmentContent, (err) => {
                         if (err) {
                           console.error("Error saving attachment:", err);
@@ -110,17 +112,16 @@ class EmailParser {
                   });
                 });
 
-                //mark attributes email as read
-                msg.once("attributes", function (attrs) {
-                  let uid = attrs.uid;
-                  imap.addFlags(uid, ["\\Seen"], function (err) {
+                //mark attributes email as read in inbox
+                msg.once("attributes", (attrs) => {
+                  const uid = attrs.uid;
+                  this.imap.addFlags(uid, ["\\Seen"], (err) => {
                     if (err) {
-                      console.log(err);
-                    } else {
-                      console.log("Done, marked email as read!");
+                      console.log(`Error marking email as read: ${err}`);
                     }
                   });
                 });
+
 
                 msg.once("end", function () {
                   console.log(prefix + "Finished");

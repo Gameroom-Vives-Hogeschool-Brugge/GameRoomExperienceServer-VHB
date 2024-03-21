@@ -19,7 +19,8 @@ module.exports = class MongoDatabase {
             RoomsData: {
                 dbName: "RoomsData",
                 rooms: "Rooms",
-                reservations: "Reservations"
+                reservations: "Reservations",
+                oldReservations: "OldReservations",
             },
             UserData: {
                 dbName: "UserData",
@@ -132,6 +133,25 @@ module.exports = class MongoDatabase {
         try {
             await this.mongoClient.connect();
             result = await this.mongoClient.db(dbName).collection(collection).insertOne(document);
+        } catch (err) {
+            throw err;
+        }finally {
+            await this.mongoClient.close();
+        }
+        return result;
+    }
+
+    //query must be an object like this: {firstName: "John"}
+    //dbName must be a string like this: this.dbStructure.UserData.dbName
+    //oldCollection must be a string like this: this.dbStructure.UserData.users
+    //newCollection must be a string like this: this.dbStructure.UserData.users
+    moveDocument = async (query, dbName, oldCollection, newCollection) => {
+        let result = undefined;
+
+        try {
+            await this.mongoClient.connect();
+            result = await this.mongoClient.db(dbName).collection(oldCollection).findOneAndDelete(query);
+            await this.mongoClient.db(dbName).collection(newCollection).insertOne(result);
         } catch (err) {
             throw err;
         }finally {
