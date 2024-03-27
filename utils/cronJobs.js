@@ -8,7 +8,7 @@ const everyMinuteCronString = '* * * * *'; //every minute
 const everyTenMinutesCronString = '*/10 * * * *'; //every ten minutes
 
 //move reservations to oldReservations collection every day at midnight
-const moveReservations = schedule.scheduleJob(everyTenMinutesCronString, async () => {
+const moveReservations = schedule.scheduleJob(midnightCronString, async () => {
   //imports
   const MongoDatabase = require('../mongoDatabase');
   
@@ -38,7 +38,7 @@ const moveReservations = schedule.scheduleJob(everyTenMinutesCronString, async (
 });
 
 //check for new emails every monday at noon
-const checkForEmails = schedule.scheduleJob(everyTenMinutesCronString, async () => {
+const checkForEmails = schedule.scheduleJob(mondayNoonCronString, async () => {
     //imports
     const EmailParser = require('../utils/emailParser');
     const MongoDatabase = require('../mongoDatabase');
@@ -53,6 +53,9 @@ const checkForEmails = schedule.scheduleJob(everyTenMinutesCronString, async () 
 
     //fetch attachments
     await emailParser.fetchAttachments();
+
+    //wait 10 seconds for the attachments to be saved
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     //get the studentFile
     const file = "storage/StudentList.xlsx";
@@ -76,9 +79,19 @@ const checkForEmails = schedule.scheduleJob(everyTenMinutesCronString, async () 
         usersCollection
     );
 
-    //check if the student is already in the database, use the student number as unique identifier
+    //if there are no students in the database, stop the search
+    if (students.length === 0) {
+        return;
+    }
+
+    //check if the student is already in the database
     for (let student of students) {
         let found = false;
+
+        //if there are no registrations in the excel file, stop the search
+        if (bruggeRegistrations.length === 0) {
+            return;
+        }
 
         //search for the student in the excel file
         for (let registration of bruggeRegistrations) {
@@ -90,19 +103,33 @@ const checkForEmails = schedule.scheduleJob(everyTenMinutesCronString, async () 
 
         //if the student is not found in the excel file, delete the student from the database
         if (!found) {
-            console.log("Student not in database");
-            console.log(student);
             const response = await mongo.deleteDocument(
                 { _id: student._id },
                 usersDatadbName,
                 usersCollection
             );
+
+            //find all reservations of the student
+            const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+            const reservations = await mongo.getDocumentsByFilter(
+                { user: student._id },
+                mongo.dbStructure.RoomsData.dbName,
+                reservationsCollection
+            );
+
+            //if the student has reservations, delete them
+            if (reservations.length > 0) {
+                //delete all reservations of the student
+                for (let reservation of reservations) {
+                    const response = await mongo.deleteDocument(
+                        { _id: reservation._id },
+                        mongo.dbStructure.RoomsData.dbName,
+                        reservationsCollection
+                    );
+                }
+            }
         }
     }
-
-
-
-    
 });
 
 

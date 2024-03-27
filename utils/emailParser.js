@@ -37,7 +37,6 @@ class EmailParser {
   }
 
   async fetchAttachments() {
-    console.log(path.join(__dirname, "../storage"));
     return new Promise((resolve, reject) => {
       this.imap.once("ready", () => {
         console.log("Start opening inbox...");

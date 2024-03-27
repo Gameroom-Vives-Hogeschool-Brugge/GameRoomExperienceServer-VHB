@@ -38,6 +38,7 @@
     "puppeteer": "^21.11.0",
     "request": "^2.88.2",
     "supertest": "^6.3.4",
+    "winston": "^3.13.0",
     "xlsx": "^0.18.5"
   },
   "jest": {

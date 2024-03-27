@@ -11,7 +11,8 @@ const MongoDatabase = require("./mongoDatabase");
 const Encryptor = require("./utils/encryptor");
 const EmailParser = require("./utils/emailParser");
 const mongodb = require("mongodb");
-const e = require("express");
+const Logger = require("./utils/logger");
+const { log } = require("winston");
 
 //load cronjobs
 require("./utils/cronJobs");
@@ -43,10 +44,7 @@ app.post("/login", async (req, res) => {
   const mongo = new MongoDatabase();
   scraper = new urlScraper();
   const encryptor = new Encryptor();
-  const emailParser = new EmailParser();
-
-  //check if a new Studentlist has been sent
-  //await emailParser.fetchEmails();
+  const logger = new Logger("login.log");
 
   //decrypt the data
   const encryptedurl = req.body.encryptedLink;
@@ -56,7 +54,11 @@ app.post("/login", async (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
 
   //check if the url is valid, otherwise send an error
-  if (!scraper.checkValidUrl(url)) return res.status(400).send("Invalid URL");
+  if (!scraper.checkValidUrl(url)) {
+    logger.error("Foute URL: " + url);
+    return res.status(400).send("Invalid URL");
+  
+  }
 
   //get cardnumber from url
   const cardNumber = url.split("/").pop();
@@ -101,11 +103,16 @@ app.post("/login", async (req, res) => {
     //encrypt the data and send it to the frontend
     const encryptedObject = encryptor.encryptObject(dataToBeSend);
 
+    //log the user
+    logger.info("Gebruiker ingelogd: " + JSON.stringify(dataToBeSend))
+
     return res.status(297).send(encryptedObject); // voor verwijzing naar persoonlijke pagina
   }
 
   //check if user exists and is not verified, otherwise send an error
   if (personFound && !personFound.verified) {
+    //log
+    logger.warn("Gebruiker nog niet geverifieerd: " + cardNumber);
     return res.status(296).send("User not verified");
   }
 
@@ -127,14 +134,18 @@ app.post("/login", async (req, res) => {
     //send an error message based on the cardnumber found
     switch (cardNumberFound) {
       case scraper.cardNotFoundMessage:
+        logger.error("Kaartnummer niet gevonden: " +  cardNumber);
         return res.status(404).send("Card not found.");
       case scraper.falseCardMessage:
+        logger.error("Geen correct kaartnummer: " +  cardNumber);
         return res.status(401).send("Invalid card number.");
       case scraper.serverErrorMessage:
+        logger.error("Interne Server fout: " + cardNumber);
         return res
           .status(500)
           .send("Internal Server Error. Please try again later.");
       default:
+        logger.error("Interne Server fout: " + cardNumber);
         return res
           .status(500)
           .send("Internal Server Error. Please try again later.");
@@ -151,19 +162,23 @@ app.post("/login", async (req, res) => {
 
       //check if the student is from Brugge, otherwise send an error
       if (placeFound == "Kortrijk") {
+        logger.info("Student gevonden en doorverwezen naar registratiepagina: " +  cardNumber);
         //Needs to be changed to Brugge
         return res.status(299).send(""); //Voor verwijzing naar registratiepagina
       } else {
+        logger.warn("Student niet van Brugge: " + cardNumber);
         return res.status(401).send("Not a Valid Student or Prof"); //Needs to be changed to Brugge and for Error message
       }
 
       //if the cardnumber is a prof, send a response
     } else if (profFound == "Personeelslid") {
+      logger.warn("Personeelslid gevonden: " + cardNumber);
       await scraper.browser.close();
       return res.status(298).send("Prof found"); //Voor verwijzing naar registratiepagina
 
       //if the cardnumber is not a student or a prof, send an error
     } else {
+      logger.error("Geen student of personeelslid: "+ cardNumber);
       await scraper.browser.close();
       return res.status(401).send("Not a Valid Student or Prof");
     }
@@ -192,10 +207,12 @@ app.get("/registrations", (req, res) => {
 });
 
 app.post("/registrations", async (req, res) => {
+  //create a new instance of the required classes
   const file = "./storage/StudentList.xlsx";
   const parser = new excelParser(file);
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
+  const logger = new Logger("registrations.log");
 
   //get data from the request
   const cardNumber = req.body.cardNumber;
@@ -235,7 +252,10 @@ app.post("/registrations", async (req, res) => {
         );
 
         //check if user exists, otherwise send an error
-        if (!user) return res.status(404).send("User Could not be found");
+        if (!user) {
+          logger.error("Gebruiker niet gevonden: " + JSON.stringify(userObject));
+          return res.status(404).send("User Could not be found");
+        }
 
         //create token and add it to the user
         const token = encryptor.createToken();
@@ -247,24 +267,31 @@ app.post("/registrations", async (req, res) => {
         );
 
         //check if token has been added, otherwise send an error
-        if (!tokenAdded.acknowledged)
+        if (!tokenAdded.acknowledged) {
+          logger.error("Token kon niet toegevoegd worden: " + JSON.stringify(userObject) + " " + token);
           return res.status(500).send("Token could not be added");
+        }
 
         //send email to user
         const message = `${process.env.BASE_URL}/user/verify/${user.cardNumber}/${token}`;
         await sendEmail(user.email, "Verify Email", message);
 
+        //log the user and token
+        logger.info("Gebruiker en token toegevoegd: " + JSON.stringify(userObject) + " " + token);
+
         return res
           .status(201)
           .send("An Email sent to your account please verify");
       } catch (error) {
-        console.log(error);
+        logger.error("Er is iets fout gegaan bij het versturen van de email: " + error);
         return res.status(500).send("Something went wrong");
       }
     } else {
+      logger.error("Gebruiker kon niet toegevoegd worden aan de database: " + userObject);
       return res.status(500).send("Person could not be added to the database");
     }
   } else {
+    logger.error("Gebruiker niet gevonden in de excel file: " + registeredPerson);
     return res.status(404).send("Person not found");
   }
 });
@@ -276,7 +303,11 @@ app.get("/started", (req, res) => {
 
 app.get("/user/verify/:cardNumber/:token", async (req, res) => {
   try {
+    //create a new instance of the required classes
     const mongo = new MongoDatabase();
+    const logger = new Logger("verify.log");
+
+    //get the names of the databases and collections
     const dbName = mongo.dbStructure.UserData.dbName;
     const usersCollection = mongo.dbStructure.UserData.users;
     const cardnumber = req.params.cardNumber;
@@ -290,11 +321,16 @@ app.get("/user/verify/:cardNumber/:token", async (req, res) => {
     const token = user.token;
 
     //check if user and token exist, otherwise send an error
-    if (!token) return res.status(404).send("Token Could not be found");
+    if (!token) {
+      logger.error("Token kon niet gevonden worden: ", cardnumber);
+      return res.status(404).send("Token Could not be found");
+    }
 
     //check if token is the same as the token in the url, otherwise send an error
-    if (token !== req.params.token)
+    if (token !== req.params.token) {
+      logger.error("Ongeldige token: ", cardnumber + " " + token);
       return res.status(401).send("Invalid Token");
+    }
 
     //update userstatus to verified
     let verified = await mongo.updateDocument(
@@ -305,12 +341,15 @@ app.get("/user/verify/:cardNumber/:token", async (req, res) => {
     );
 
     //check if userstatus has been updated, otherwise send an error
-    if (!verified.acknowledged)
+    if (!verified.acknowledged) {
+      logger.error("Gebruiker kon niet geverifieerd worden: ", user); 
       return res.status(500).send("User could not be verified");
+    }
 
+    logger.info("Gebruiker geverifieerd: ", user);
     res.status(200).send("User has been verified");
   } catch (error) {
-    console.log(error);
+    logger.error("Er is iets fout gegaan bij het verifiëren van de gebruiker: " + error + " " + cardnumber + " " + token);
     res.status(500).send("Something went wrong");
   }
 });
@@ -380,21 +419,29 @@ app.get("/courses", async (req, res) => {
 });
 
 app.post("/opendoor", async (req, res) => {
+  const logger = new Logger("opendoor.log");
+
   //wait for 2 seconds then send a response
   setTimeout(() => {
+    logger.info("Door opened");
     return res.status(200).send("Door opened");
   }, 2000);
 });
 
 app.get("/rooms", async (req, res) => {
+  //create a new instance of the required classes
   const mongo = new MongoDatabase();
+  
+  //get the names of the databases and collections
   const dbName = mongo.dbStructure.RoomsData.dbName;
   const roomsCollection = mongo.dbStructure.RoomsData.rooms;
   const rooms = await mongo.getAllDocuments(dbName, roomsCollection);
+
   res.status(200).send(rooms);
 });
 
 app.get("/reservations", async (req, res) => {
+  //create a new instance of the required classes
   const mongo = new MongoDatabase();
 
   //get the names of the databases and collections
@@ -439,8 +486,11 @@ app.get("/reservations", async (req, res) => {
 });
 
 app.post("/reservations", async (req, res) => {
+  //create a new instance of the required classes
   const mongo = new MongoDatabase();
+  const reservationLogger = new Logger("reservations.log");
 
+  //get the reservation data from the request
   const reservation = req.body;
 
   //create a mongoDb ObjectId from a string
@@ -481,6 +531,7 @@ app.post("/reservations", async (req, res) => {
       ) {
         ++foundReservations;
         if (foundReservations > 1) {
+            reservationLogger.warn("Reservatie kon niet toegevoegd worden door overlapping: " + JSON.stringify(reservation));
             return res.status(400).send("Reservation not valid");
         } 
         continue;
@@ -506,8 +557,12 @@ app.post("/reservations", async (req, res) => {
   );
 
   if (insertResponse.acknowledged) {
+    //log the full reservation as info
+    reservationLogger.info("Reservatie Toegevoegd: " + JSON.stringify(reservationToAdd));
     return res.status(201).send("Reservation added");
   } else {
+    //log the full reservation as error
+    reservationLogger.error("Reservatie kon niet toegevoegd worden door een interne fout: " + JSON.stringify(reservationToAdd));
     return res.status(500).send("Reservation could not be added");
   }
 });
@@ -515,6 +570,7 @@ app.post("/reservations", async (req, res) => {
 app.delete("/reservations", async(req, res) => {
   //create a new instance of the required classes
   const mongo = new MongoDatabase();
+  const logger = new Logger("reservations.log");
 
   //use the reservationId only
   const reservationId = new mongodb.ObjectId(req.body.reservationId);
@@ -530,16 +586,22 @@ app.delete("/reservations", async(req, res) => {
 
   //check if the reservation has been deleted, otherwise send an error
   if (deleteResponse.acknowledged) {
+    logger.info("Reservatie verwijderd: "+ reservationId);
     return res.status(200).send("Reservation deleted");
   } else {
+    logger.error("Reservatie kon niet verwijderd worden: "+ reservationId);
     return res.status(500).send("Reservation could not be deleted");
   }
 })
 
 app.post("/myReservations", async(req, res) => {
+  //create a new instance of the required classes
   const mongo = new MongoDatabase();
 
+  //create a mongoDb ObjectId from the userId
   const userId = new mongodb.ObjectId(req.body.userId)
+  
+  //create a new instance of the required classes
   const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
   const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
   const roomsCollection = mongo.dbStructure.RoomsData.rooms;
@@ -552,6 +614,7 @@ app.post("/myReservations", async(req, res) => {
     reservationsCollection
   );
 
+  //get the room for each reservation
   for (let i = 0; i < reservations.length; i++) {
     const room = await mongo.getOnedocumentByFilter(
       { _id: reservations[i].room },
@@ -562,6 +625,28 @@ app.post("/myReservations", async(req, res) => {
   }
 
   return res.status(200).send(reservations);
+})
+
+app.get("/logfiles", async(req, res) => {
+  //import the logs in the logs directory
+  const encryptor = new Encryptor();
+  const loginLogger = new Logger("login.log");
+  const registrationLogger = new Logger("registrations.log");
+  const reservationLogger = new Logger("reservations.log");
+  const verifyLogger = new Logger("verify.log");
+  const openDoorLogger = new Logger("opendoor.log");
+
+  //get all the logfiles
+  const loginFile = loginLogger.getLogFileDataInJson();
+  const registrationFile = registrationLogger.getLogFileDataInJson();
+  const reservationsFile = reservationLogger.getLogFileDataInJson();
+  const verifyFile = verifyLogger.getLogFileDataInJson();
+  const openDoorFile = openDoorLogger.getLogFileDataInJson();
+
+  //encrypt the data and send it to the frontend
+  const encryptedLogfiles = encryptor.encryptObject([loginFile, registrationFile, reservationsFile ,verifyFile, openDoorFile]);
+
+  return res.status(200).send(encryptedLogfiles);
 })
 
 app.listen(port, () => {
