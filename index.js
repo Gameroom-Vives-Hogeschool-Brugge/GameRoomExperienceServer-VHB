@@ -9,10 +9,8 @@ const sendEmail = require("./utils/email");
 const dotenv = require("dotenv");
 const MongoDatabase = require("./mongoDatabase");
 const Encryptor = require("./utils/encryptor");
-const EmailParser = require("./utils/emailParser");
 const mongodb = require("mongodb");
 const Logger = require("./utils/logger");
-const { log } = require("winston");
 
 //load cronjobs
 require("./utils/cronJobs");
@@ -651,6 +649,19 @@ app.get("/logfiles", async(req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
+
+  //check if the logfiles exist, otherwise create them
+  const loginLogger = new Logger("login.log");
+  const registrationLogger = new Logger("registrations.log");
+  const reservationLogger = new Logger("reservations.log");
+  const verifyLogger = new Logger("verify.log");
+  const openDoorLogger = new Logger("opendoor.log");
+
+  loginLogger.createLogFile();
+  registrationLogger.createLogFile();
+  reservationLogger.createLogFile();
+  verifyLogger.createLogFile();
+  openDoorLogger.createLogFile();
 });
 
 module.exports.app = app;

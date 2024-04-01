@@ -153,4 +153,7 @@ Dockerfile
 storage/*.json
 examples/*.json
 
+#ssl
+ssl/*
+
 # End of https://www.toptal.com/developers/gitignore/api/node

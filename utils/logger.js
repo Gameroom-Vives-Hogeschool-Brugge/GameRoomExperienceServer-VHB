@@ -10,7 +10,7 @@ class Logger {
         this.fileToLog = fileToLog;
         this.filePath = path.join(
             __dirname,
-            "../logs",
+            "../storage",
             fileToLog
           );
         this.logger = createLogger({
@@ -28,6 +28,14 @@ class Logger {
                 new transports.File({ filename: this.filePath }),
             ],
         });
+    }
+
+    createLogFile() {
+        //check if the file exists, if not create it
+        const fs = require('fs');
+        if (!fs.existsSync(this.filePath)) {
+            fs.writeFileSync(this.filePath, '');
+        }
     }
 
     //log an error
