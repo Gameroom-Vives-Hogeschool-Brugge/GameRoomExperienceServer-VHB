@@ -33,9 +33,9 @@ app.use(bodyParser.json());
 // Set middleware of CORS 
 app.use((req, res, next) => {
   res.setHeader(
-    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Origin",[
     "https://gameroomexperienceapp-vhb.onrender.com",
-    "http://localhost:5173"
+    "http://localhost:5173"]
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
