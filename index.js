@@ -20,11 +20,20 @@ dotenv.config({
   path: "./keys.env",
 });
 
+let corsOptions = {};
+
 //cors options
-const corsOptions = {
-  origin: ["http://localhost:5173", "https://gameroomexperienceapp-vhb.onrender.com"],
-  optionsSuccessStatus: 200,
-};
+if (process.env.NODE_ENV !== "production") {
+  corsOptions = {
+    origin: "https://gameroomexperienceapp-vhb.onrender.com/",
+    optionsSuccessStatus: 200,
+  };
+} else {
+  corsOptions = {
+    origin: "http://localhost:5173/Admins",
+    optionsSuccessStatus: 200,
+  };
+}
 
 //middleware
 app.use(cors(corsOptions));
@@ -666,6 +675,7 @@ app.get("/logfiles", async(req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
+  console.log("Environment: " + process.env.NODE_ENV);
 
   //check if the logfiles exist, otherwise create them
   const loginLogger = new Logger("login.log");
