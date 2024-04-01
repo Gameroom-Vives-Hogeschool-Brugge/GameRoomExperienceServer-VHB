@@ -23,14 +23,14 @@ dotenv.config({
 let corsOptions = {};
 
 //cors options
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV == "production") {
   corsOptions = {
-    origin: "https://gameroomexperienceapp-vhb.onrender.com/",
+    origin: "https://gameroomexperienceapp-vhb.onrender.com",
     optionsSuccessStatus: 200,
   };
 } else {
   corsOptions = {
-    origin: "http://localhost:5173/Admins",
+    origin: "http://localhost:5173",
     optionsSuccessStatus: 200,
   };
 }
