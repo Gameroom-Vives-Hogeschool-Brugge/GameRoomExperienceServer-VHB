@@ -21,22 +21,17 @@ dotenv.config({
 });
 
 //cors options
-/*const corsOptions = {
+const corsOptions = {
   origin: ["http://localhost:5173", "https://gameroomexperienceapp-vhb.onrender.com"],
   optionsSuccessStatus: 200,
-};*/
+};
 
 //middleware
-//app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 // Set middleware of CORS 
 app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",[
-    "https://gameroomexperienceapp-vhb.onrender.com",
-    "http://localhost:5173"]
-  );
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,CONNECT,TRACE"
