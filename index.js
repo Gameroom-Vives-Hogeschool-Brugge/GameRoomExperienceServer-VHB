@@ -22,14 +22,10 @@ dotenv.config({
 
 //cors options
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://gameroomexperienceapp-vhb.onrender.com/"],
+  origin: ["http://localhost:5173", "https://gameroomexperienceapp-vhb.onrender.com"],
   optionsSuccessStatus: 200,
 };
 
-//middleware
-app.use(cors(corsOptions));
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
 
 const port = 3000;
 
