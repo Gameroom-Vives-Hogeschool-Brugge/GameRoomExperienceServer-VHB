@@ -1,12 +1,19 @@
 const xlsx = require('xlsx');
+const fs = require('fs');
 
 module.exports = class ExcelParser {
     constructor(file) {
         this.file = file;
     }
 
-    giveAllRegistrationsInJSON = () => {
+    giveAllRegistrationsInJSON = async () => {
         const registrations = "Alle inschrijvingen"
+
+        //async check if the files exists
+        if (!fs.existsSync(this.file)) {
+            await this.checkForEmails();
+        }
+
         const workbook = xlsx.readFile(this.file);
         const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[registrations]);
 
@@ -35,5 +42,19 @@ module.exports = class ExcelParser {
         });
 
         return personFound;
+    }
+
+    async checkForEmails (){
+        //imports
+        const EmailParser = require('../utils/emailParser');
+
+        //variables
+        const emailParser = new EmailParser();
+
+        //fetch attachments
+        await emailParser.fetchAttachments();
+
+        //wait 10 seconds for the attachments to be saved
+        await new Promise(resolve => setTimeout(resolve, 10000));
     }
 }

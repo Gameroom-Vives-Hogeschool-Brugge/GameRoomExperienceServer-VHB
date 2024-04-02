@@ -74,9 +74,6 @@ app.post("/login", async (req, res) => {
   const encryptedurl = req.body.encryptedLink;
   const url = encryptor.decrypt(encryptedurl);
 
-  //change the header to allow all origins, NEEDS TO BE CHANGED TO ALLOW ONLY THE FRONTEND URL
-  //res.header("Access-Control-Allow-Origin", "*");
-
   //check if the url is valid, otherwise send an error
   if (!scraper.checkValidUrl(url)) {
     logger.error("Foute URL: " + url);
@@ -209,7 +206,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/registrations", (req, res) => {
+app.get("/registrations", async (req, res) => {
   //create a new instance of the required classes
   const file = "./storage/StudentList.xlsx";
   const parser = new excelParser(file);
@@ -219,7 +216,7 @@ app.get("/registrations", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
 
   //get all registrations from the excel file, remove the students not from Brugge, give me only the names and send them to the frontend
-  const registrations = parser.giveAllRegistrationsInJSON();
+  const registrations = await parser.giveAllRegistrationsInJSON();
   const bruggeRegistrations =
     parser.removeAllRegistrationNotFromBrugge(registrations);
   const names = parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
@@ -244,7 +241,7 @@ app.post("/registrations", async (req, res) => {
   const type = req.body.type;
 
   //Get all registrations from the excel file
-  const registrations = parser.giveAllRegistrationsInJSON();
+  const registrations = await parser.giveAllRegistrationsInJSON();
   const registeredPerson = req.body.person;
   const personFoundInExcel = parser.findPersonInRegistrations(
     registeredPerson,
