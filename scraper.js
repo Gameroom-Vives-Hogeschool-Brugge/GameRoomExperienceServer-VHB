@@ -1,9 +1,3 @@
-const dotenv = require("dotenv");
-
-dotenv.config({
-  path: "./keys.env",
-});
-
 module.exports = class Scraper {
   puppeteer = require("puppeteer");
 
@@ -22,10 +16,7 @@ module.exports = class Scraper {
   }
 
   getPage = async (url) => {
-    this.browser = await this.puppeteer.launch(
-      { args: ["--no-sandbox", "--disable-setuid-sandbox", "--single-process", "--no-zygote"], 
-        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : this.puppeteer.executablePath()},
-    );
+    this.browser = await this.puppeteer.launch();
     const page = await this.browser.newPage();
 
     await page.goto(url);

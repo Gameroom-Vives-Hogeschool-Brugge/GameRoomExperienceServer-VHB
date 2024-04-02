@@ -35,7 +35,7 @@
     "node-imap": "^0.9.6",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.9",
-    "puppeteer": "^21.11.0",
+    "puppeteer": "^22.6.2",
     "request": "^2.88.2",
     "supertest": "^6.3.4",
     "winston": "^3.13.0",
