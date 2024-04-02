@@ -147,7 +147,7 @@ storage/*.xlsx
 examples/*.xlsx
 
 #Dockerfile
-Dockerfile
+DockerfileCopy
 
 #storage json files
 storage/*.json
