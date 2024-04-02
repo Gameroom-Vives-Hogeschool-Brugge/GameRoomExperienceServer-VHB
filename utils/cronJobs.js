@@ -38,7 +38,7 @@ const moveReservations = schedule.scheduleJob(midnightCronString, async () => {
 });
 
 //check for new emails every monday at noon
-const checkForEmails = schedule.scheduleJob(everyMinuteCronString, async () => {
+const checkForEmails = schedule.scheduleJob(mondayNoonCronString, async () => {
     //imports
     const EmailParser = require('../utils/emailParser');
     const MongoDatabase = require('../mongoDatabase');
