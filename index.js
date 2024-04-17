@@ -132,7 +132,6 @@ app.post("/login", async (req, res) => {
 
   //check if user exists and is not verified, otherwise send an error
   if (personFound && !personFound.verified) {
-    //log
     logger.warn("Gebruiker nog niet geverifieerd: " + cardNumber);
     return res.status(296).send("User not verified");
   }
@@ -182,13 +181,12 @@ app.post("/login", async (req, res) => {
       await scraper.browser.close();
 
       //check if the student is from Brugge, otherwise send an error
-      if (placeFound == "Kortrijk") {
+      if (placeFound == "Brugge") {
         logger.info("Student gevonden en doorverwezen naar registratiepagina: " +  cardNumber);
-        //Needs to be changed to Brugge
         return res.status(299).send(""); //Voor verwijzing naar registratiepagina
       } else {
         logger.warn("Student niet van Brugge: " + cardNumber);
-        return res.status(401).send("Not a Valid Student or Prof"); //Needs to be changed to Brugge and for Error message
+        return res.status(401).send("Student not of Brugge");
       }
 
       //if the cardnumber is a prof, send a response
@@ -389,6 +387,155 @@ app.get("/users", async (req, res) => {
   const encryptedUsers = encryptor.encryptObject(users);
 
   res.status(200).send(encryptedUsers);
+});
+
+app.post("/users", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const encryptor = new Encryptor();
+  const logger = new Logger("registrations.log");
+
+  //get the user data from the request
+  const encryptedUser = req.body.encryptedUser;
+
+  //decrypt the user data
+  const user = encryptor.decryptObject(encryptedUser)
+
+   //create a mongoDb ObjectId from a string
+    const roleId = new mongodb.ObjectId(user.role);
+    const typeId = new mongodb.ObjectId(user.type);
+    const courseId = new mongodb.ObjectId(user.course);
+
+    const newUser = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      idNumber: user.idNumber,
+      cardNumber: user.cardNumber,
+      role: roleId,
+      type: typeId,
+      course: courseId,
+      token:"",
+      verified: false,
+    };
+     
+   //insert the user into the database
+   const insertResponse = await mongo.insertDocument(
+     newUser,
+     mongo.dbStructure.UserData.dbName,
+     mongo.dbStructure.UserData.users
+   );
+ 
+   //check if the user has been added to the database, otherwise send an error
+   if (!insertResponse.acknowledged) {
+     logger.error("Gebruiker kon niet toegevoegd worden: " + JSON.stringify(newUser));
+     return res.status(500).send("User could not be added");
+   }
+ 
+   //create a token and send an email to the user
+   const token = encryptor.createToken();
+   let tokenAdded = await mongo.updateDocument(
+     { _id: insertResponse.insertedId },
+     { $set: { token: token } },
+     mongo.dbStructure.UserData.dbName,
+     mongo.dbStructure.UserData.users
+   );
+ 
+   //check if the token has been added, otherwise send an error
+   if (!tokenAdded.acknowledged) {
+     logger.error("Token kon niet toegevoegd worden: " + JSON.stringify(newUser) + " " + token);
+     return res.status(500).send("Token could not be added");
+   }
+ 
+   //send an email to the user
+   const message = `${process.env.BASE_URL}/user/verify/${newUser.cardNumber}/${token}`;
+   try {
+     await sendEmail(newUser.email, "Verify Email", message);
+     logger.info("Gebruiker en token toegevoegd: " + JSON.stringify(newUser) + " " + token);
+     return res.status(201).send("An Email sent to your account please verify");
+   } catch (error) {
+     logger.error("Er is iets fout gegaan bij het versturen van de email: " + error);
+     return res.status(500).send("Something went wrong");
+   }
+ 
+});
+
+app.delete("/users", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const logger = new Logger("registrations.log");
+  const encryptor = new Encryptor();
+
+  //get the userId from the request
+  const userId = new mongodb.ObjectId(req.body.encryptedUserId);
+
+  //get the names of the databases and collections
+  const usersCollection = mongo.dbStructure.UserData.users;
+  const dbName = mongo.dbStructure.UserData.dbName;
+
+  //delete the user
+  const deleteResponse = await mongo.deleteDocument(
+    { _id: userId },
+    dbName,
+    usersCollection
+  );
+
+  //check if the user has been deleted, otherwise send an error
+  if (deleteResponse.acknowledged) {
+    logger.info("Gebruiker verwijderd: "+ userId);
+    return res.status(200).send("User deleted");
+  } else {
+    logger.error("Gebruiker kon niet verwijderd worden: "+ userId);
+    return res.status(500).send("User could not be deleted");
+  }
+});
+
+app.put("/users", async (req, res) => {
+  //create a new instance of the required classes
+  const mongo = new MongoDatabase();
+  const logger = new Logger("registrations.log");
+  const encryptor = new Encryptor();
+
+  //get the user data from the request
+  const encryptedUser = req.body.encryptedUser;
+
+  //decrypt the user data
+  const user = encryptor.decryptObject(encryptedUser);
+
+  //create a mongoDb ObjectId from a string
+  const userId = new mongodb.ObjectId(user._id);
+  const roleId = new mongodb.ObjectId(user.role);
+  const typeId = new mongodb.ObjectId(user.type);
+  const courseId = new mongodb.ObjectId(user.course);
+
+  //create the user object
+  const updatedUser = {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    idNumber: user.idNumber,
+    cardNumber: user.cardNumber,
+    role: roleId,
+    type: typeId,
+    course: courseId,
+  };
+
+  //update the user in the database
+  const updateResponse = await mongo.updateDocument(
+    { _id: userId },
+    { $set: updatedUser },
+    mongo.dbStructure.UserData.dbName,
+    mongo.dbStructure.UserData.users
+  );
+
+  //check if the user has been updated, otherwise send an error
+  if (!updateResponse.acknowledged) {
+    logger.error("Gebruiker kon niet geüpdatet worden: " + JSON.stringify(updatedUser));
+    return res.status(500).send("User could not be updated");
+  }
+
+  logger.info("Gebruiker geüpdatet: " + JSON.stringify(updatedUser));
+  return res.status(200).send("User updated");
 });
 
 app.get("/types", async (req, res) => {

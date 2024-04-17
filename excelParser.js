@@ -11,6 +11,7 @@ module.exports = class ExcelParser {
 
         //async check if the files exists
         if (!fs.existsSync(this.file)) {
+            console.log("File does not exist, checking for emails");
             await this.checkForEmails();
         }
 
