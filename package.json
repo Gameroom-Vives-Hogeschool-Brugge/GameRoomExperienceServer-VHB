@@ -13,7 +13,9 @@
     "testEncryptor": "jest --setupFiles dotenv/config --testPathPattern=encryptor",
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",
-    "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb"
+    "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb",
+    "dockercompose": "docker-compose up -d",
+    "dockercomposebuild": "docker-compose up --build -d"
   },
   "keywords": [],
   "author": "",

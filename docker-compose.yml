@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: always
+    volumes:
+      - .:/app
+    environment:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+      PUPPETEER_EXECUTABLE_PATH: "/usr/bin/google-chrome-stable"
+    ports:
+      - "3000:3000"
+    env_file:
+      - keys.env
+    command: node index.js
