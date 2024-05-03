@@ -14,11 +14,11 @@
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",
     "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb",
-    "dockercompose": "docker-compose up -d",
-    "dockercomposebuild": "docker-compose up --build -d"
+    "dockercompose": "docker compose up -d",
+    "dockercomposebuild": "docker compose up --build -d"
   },
   "keywords": [],
-  "author": "",
+  "author": "Olivier Van Ransbeeck",
   "license": "ISC",
   "dependencies": {
     "base64-stream": "^1.0.0",

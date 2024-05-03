@@ -1,15 +1,17 @@
 //imports
 const express = require("express");
 var bodyParser = require("body-parser");
-const urlScraper = require("./scraper.js");
-const excelParser = require("./excelParser.js");
 const app = express();
-const cors = require("cors");
-const sendEmail = require("./utils/email");
+const cors = require("cors")
 const dotenv = require("dotenv");
-const MongoDatabase = require("./mongoDatabase");
-const Encryptor = require("./utils/encryptor");
 const mongodb = require("mongodb");
+
+//utils
+const urlScraper = require("./utils/scraper.js");
+const excelParser = require("./utils/excelParser.js");
+const sendEmail = require("./utils/email");
+const MongoDatabase = require("./utils/mongoDatabase.js");
+const Encryptor = require("./utils/encryptor");
 const Logger = require("./utils/logger");
 
 //load cronjobs
@@ -78,7 +80,6 @@ app.post("/login", async (req, res) => {
   if (!scraper.checkValidUrl(url)) {
     logger.error("Foute URL: " + url);
     return res.status(400).send("Invalid URL");
-  
   }
 
   //get cardnumber from url
@@ -175,13 +176,16 @@ app.post("/login", async (req, res) => {
     const studentFound = await scraper.findElement(page, scraper.studentXPath);
     const profFound = await scraper.findElement(page, scraper.profXPath);
 
+    console.log(studentFound);
+    console.log(profFound);
+
     //if the cardnumber is a student, check if the student is from Brugge
     if (studentFound == "Student") {
       const placeFound = await scraper.findElement(page, scraper.locationXPath);
       await scraper.browser.close();
 
       //check if the student is from Brugge, otherwise send an error
-      if (placeFound == "Brugge") {
+      if (placeFound == "Brugge" || placeFound == "Kortrijk, Brugge") {
         logger.info("Student gevonden en doorverwezen naar registratiepagina: " +  cardNumber);
         return res.status(299).send(""); //Voor verwijzing naar registratiepagina
       } else {
@@ -510,6 +514,7 @@ app.put("/users", async (req, res) => {
 
   //create the user object
   const updatedUser = {
+    _id: userId,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,

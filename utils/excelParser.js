@@ -47,7 +47,7 @@ module.exports = class ExcelParser {
 
     async checkForEmails (){
         //imports
-        const EmailParser = require('./utils/emailParser');
+        const EmailParser = require('./emailParser');
 
         //variables
         const emailParser = new EmailParser();

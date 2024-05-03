@@ -2,15 +2,17 @@
 const schedule = require('node-schedule');
 
 //variables
-const midnightCronString = '0 0 * * *'; //every day at midnight
+
 const mondayNoonCronString = '0 12 * * 1'; //every monday at noon
 const everyMinuteCronString = '* * * * *'; //every minute
 const everyTenMinutesCronString = '*/10 * * * *'; //every ten minutes
 
+const midnightCronString = '0 0 * * *'; //every day at midnight
+
 //move reservations to oldReservations collection every day at midnight
 const moveReservations = schedule.scheduleJob(midnightCronString, async () => {
   //imports
-  const MongoDatabase = require('../mongoDatabase');
+  const MongoDatabase = require('./mongoDatabase');
   
   //database variables
   const mongo = new MongoDatabase();
@@ -41,8 +43,8 @@ const moveReservations = schedule.scheduleJob(midnightCronString, async () => {
 const checkForEmails = schedule.scheduleJob(mondayNoonCronString, async () => {
     //imports
     const EmailParser = require('../utils/emailParser');
-    const MongoDatabase = require('../mongoDatabase');
-    const ExcelParser = require('../excelParser');
+    const MongoDatabase = require('./mongoDatabase');
+    const ExcelParser = require('./excelParser');
 
     //variables
     const emailParser = new EmailParser();
