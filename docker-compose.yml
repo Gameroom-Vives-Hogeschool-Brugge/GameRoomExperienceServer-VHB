@@ -1,7 +1,6 @@
-name: gameroomexperienceserver
-
 services:
   app:
+    container_name: gameroomexperienceserver
     build: .
     restart: always
     volumes:
@@ -14,3 +13,16 @@ services:
     env_file:
       - keys.env
     command: node index.js
+    links:
+      - mongo
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

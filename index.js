@@ -14,6 +14,7 @@ const MongoDatabase = require("./utils/mongoDatabase.js");
 const Encryptor = require("./utils/encryptor");
 const Logger = require("./utils/logger");
 
+
 //load cronjobs
 require("./utils/cronJobs");
 
@@ -545,6 +546,7 @@ app.put("/users", async (req, res) => {
 
 app.get("/types", async (req, res) => {
   //create a new instance of the required classes
+  //const mongo = new MongoDatabase();
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
 
@@ -561,6 +563,7 @@ app.get("/types", async (req, res) => {
 
 app.get("/roles", async (req, res) => {
   //create a new instance of the required classes
+  //const mongo = new MongoDatabase();
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
 
@@ -577,6 +580,7 @@ app.get("/roles", async (req, res) => {
 
 app.get("/courses", async (req, res) => {
   //create a new instance of the required classes
+  //const mongo = new MongoDatabase();
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
 

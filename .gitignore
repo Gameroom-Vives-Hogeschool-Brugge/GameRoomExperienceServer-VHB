@@ -156,4 +156,7 @@ examples/*.json
 #ssl
 ssl/*
 
+#mongoFiles
+data/*
+
 # End of https://www.toptal.com/developers/gitignore/api/node

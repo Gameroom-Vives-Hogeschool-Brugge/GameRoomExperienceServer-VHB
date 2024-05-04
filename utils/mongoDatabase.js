@@ -9,7 +9,7 @@ dotenv.config({
 
 module.exports = class MongoDatabase {
     constructor() {
-        this.mongoClient = new MongoClient(process.env.MONGODB_URI, {
+        this.mongoClient = new MongoClient(process.env.LOCAL_MONGODB_URI, {
             serverApi: {
               version: ServerApiVersion.v1,
               strict: true,
