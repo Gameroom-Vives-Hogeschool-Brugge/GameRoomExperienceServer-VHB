@@ -146,9 +146,6 @@ dist
 storage/*.xlsx
 examples/*.xlsx
 
-#Dockerfile
-DockerfileCopy
-
 #storage json files
 storage/*.json
 examples/*.json

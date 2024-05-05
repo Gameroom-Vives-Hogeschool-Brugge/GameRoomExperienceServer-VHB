@@ -55,9 +55,7 @@ git clone https://github.com/Gameroom-Vives-Hogeschool-Brugge/GameRoomExperience
 
 1. Copy the environment variables file (keys.env) to the main application folder.
 
-2. Make a storage folder in the main application folder.
-
-3. Copy the studentList.xlsx to the /storage folder.
+2. Copy the storage and examples folders to the main application folder.
 
 ## Install the node_modules
 
