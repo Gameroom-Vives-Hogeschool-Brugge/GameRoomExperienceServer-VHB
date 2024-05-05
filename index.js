@@ -28,7 +28,7 @@ let corsOptions = {};
 //cors options
 if (process.env.NODE_ENV == "production") {
   corsOptions = {
-    origin: "https://gameroomexperienceapp-vhb.onrender.com",
+    origin: "http://localhost:8080",
     optionsSuccessStatus: 200,
   };
 } else {

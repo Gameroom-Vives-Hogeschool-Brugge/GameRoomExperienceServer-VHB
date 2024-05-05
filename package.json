@@ -14,9 +14,9 @@
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",
     "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb",
-    "dockercompose": "docker compose up -d",
-    "dockercomposestop": "docker compose down",
-    "dockercomposebuildandrun": "docker compose up --build -d"
+    "dockercomposeup": "docker compose up -d",
+    "dockercomposestop": "docker compose stop",
+    "dockercomposebuildandup": "docker compose up -d --build"
   },
   "keywords": [],
   "author": "Olivier Van Ransbeeck",
