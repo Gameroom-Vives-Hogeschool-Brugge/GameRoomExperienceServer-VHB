@@ -66,7 +66,7 @@ npm install
 ### Deploy all containers
 
 ```bash
-docker-compose up --build -d
+docker compose up -d --build
 ```
 
 ## Containers
