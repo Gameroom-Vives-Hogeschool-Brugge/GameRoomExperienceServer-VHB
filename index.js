@@ -60,8 +60,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const port = 3000;
-
 //routes
 app.post("/test", async (req, res) => {
 });
@@ -826,8 +824,8 @@ app.get("/logfiles", async(req, res) => {
   return res.status(200).send(encryptedLogfiles);
 })
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Example app listening on port ${process.env.PORT}`);
   console.log("Environment: " + process.env.NODE_ENV);
 
   //check if the logfiles exist, otherwise create them
