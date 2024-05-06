@@ -71,9 +71,9 @@ npm install
 docker compose up -d --build
 ```
 
-### Import the JSON files to the MongoDB database
+## Import the JSON files to the MongoDB database
 
-#### RoomsData.Rooms
+### RoomsData.Rooms
 
 ```json
 [{
@@ -118,7 +118,7 @@ docker compose up -d --build
 }]
 ```
 
-#### RoomsData.Reservations
+### RoomsData.Reservations
 
 ```json
 [{
@@ -138,7 +138,7 @@ docker compose up -d --build
 }]
 ```
 
-#### RoomsData.OldReservations
+### RoomsData.OldReservations
 
 ```json
 [{
@@ -158,7 +158,7 @@ docker compose up -d --build
 }]
 ```
 
-#### UserData.courses
+### UserData.courses
 
 ```json
 [{
@@ -187,7 +187,7 @@ docker compose up -d --build
 }]
 ```
 
-#### UserData.roles
+### UserData.roles
 
 ```json
 [{
@@ -210,7 +210,7 @@ docker compose up -d --build
 }]
 ```
 
-#### UserData.types
+### UserData.types
 
 ```json
 [{
@@ -233,7 +233,7 @@ docker compose up -d --build
 }]
 ```
 
-#### UserData.users (example file with false data)
+### UserData.users (example file with false data)
 
 ```json
 [{
