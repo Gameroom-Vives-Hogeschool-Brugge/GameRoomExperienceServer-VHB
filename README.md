@@ -57,6 +57,8 @@ git clone https://github.com/Gameroom-Vives-Hogeschool-Brugge/GameRoomExperience
 
 2. Copy the storage and examples folders to the main application folder.
 
+
+
 ## Install the node_modules
 
 ```bash
@@ -67,6 +69,194 @@ npm install
 
 ```bash
 docker compose up -d --build
+```
+
+### Import the JSON files to the MongoDB database
+
+#### RoomsData.Rooms
+
+```json
+[{
+  "_id": {
+    "$oid": "65ddc3c1191c68231bf6110c"
+  },
+  "description": "Console",
+  "maxStudents": 2,
+  "earliestReservationTime": "09:00",
+  "latestReservationTime": "17:00",
+  "roomNumber": 1
+},
+{
+  "_id": {
+    "$oid": "65ddc48fe28da42a3388ebd8"
+  },
+  "description": "VR Bril",
+  "maxStudents": 2,
+  "earliestReservationTime": "09:00",
+  "latestReservationTime": "17:00",
+  "roomNumber": 2
+},
+{
+  "_id": {
+    "$oid": "65faee64e7b1de9173fbcc03"
+  },
+  "description": "Computer 1",
+  "maxStudents": 2,
+  "earliestReservationTime": "09:00",
+  "latestReservationTime": "17:00",
+  "roomNumber": 3
+},
+{
+  "_id": {
+    "$oid": "65faee6ae7b1de9173fbcc04"
+  },
+  "description": "Computer 2",
+  "maxStudents": 2,
+  "earliestReservationTime": "09:00",
+  "latestReservationTime": "17:00",
+  "roomNumber": 4
+}]
+```
+
+#### RoomsData.Reservations
+
+```json
+[{
+  "_id": {
+    "$oid": "65facc6ce7b1de9173fbcbe1"
+  },
+  "room": {
+    "$oid": "65ddc48fe28da42a3388ebd8"
+  },
+  "date": {
+    "$date": "2024-03-18T08:00:00.000Z"
+  },
+  "duration": 1,
+  "user": {
+    "$oid": "65e5c77581846d9b55a37167"
+  }
+}]
+```
+
+#### RoomsData.OldReservations
+
+```json
+[{
+  "_id": {
+    "$oid": "65facc6ce7b1de9173fbcbe1"
+  },
+  "room": {
+    "$oid": "65ddc48fe28da42a3388ebd8"
+  },
+  "date": {
+    "$date": "2024-03-18T08:00:00.000Z"
+  },
+  "duration": 1,
+  "user": {
+    "$oid": "65e5c77581846d9b55a37167"
+  }
+}]
+```
+
+#### UserData.courses
+
+```json
+[{
+  "_id": {
+    "$oid": "65ddc6ab191c68231bf61114"
+  },
+  "course": "PBA Electronica-ICT (Kortrijk) (AO)",
+  "description": "A course about Electronics-ICT from home",
+  "location": "Kortrijk"
+},
+{
+  "_id": {
+    "$oid": "65ddc70e191c68231bf61115"
+  },
+  "course": "Not Applicable",
+  "description": "For persons not registered as students",
+  "location": "Not Applicable"
+},
+{
+  "_id": {
+    "$oid": "65ddc864191c68231bf6111b"
+  },
+  "course": "PBA Elektronica-ICT (Brugge)",
+  "description": "A course about Electronics-ICT from Brugge",
+  "location": "Brugge"
+}]
+```
+
+#### UserData.roles
+
+```json
+[{
+  "_id": {
+    "$oid": "65ddc614191c68231bf61110"
+  },
+  "role": "Student"
+},
+{
+  "_id": {
+    "$oid": "65ddc626191c68231bf61112"
+  },
+  "role": "Prof"
+},
+{
+  "_id": {
+    "$oid": "65ddc649191c68231bf61113"
+  },
+  "role": "Admin"
+}]
+```
+
+#### UserData.types
+
+```json
+[{
+  "_id": {
+    "$oid": "65ddc778191c68231bf61116"
+  },
+  "type": "Student"
+},
+{
+  "_id": {
+    "$oid": "65ddc793191c68231bf61117"
+  },
+  "type": "Prof"
+},
+{
+  "_id": {
+    "$oid": "65ddc7a2191c68231bf61119"
+  },
+  "type": "Exception"
+}]
+```
+
+#### UserData.users (example file with false data)
+
+```json
+[{
+  "_id": {
+    "$oid": "65ddc576191c68231bf6110f"
+  },
+  "idNumber": "0954449",
+  "cardNumber": "00000002",
+  "firstName": "Dimitri",
+  "lastName": "lastName",
+  "email": "dimitri.starkov@student.vives.be",
+  "course": {
+    "$oid": "65ddc6ab191c68231bf61114"
+  },
+  "role": {
+    "$oid": "65ddc614191c68231bf61110"
+  },
+  "type": {
+    "$oid": "65ddc778191c68231bf61116"
+  },
+  "token": "abc123",
+  "verified": true
+}]
 ```
 
 # Containers
