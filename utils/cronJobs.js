@@ -64,8 +64,8 @@ const checkForEmails = schedule.scheduleJob(mondayNoonCronString, async () => {
     const excelParser = new ExcelParser(file);
 
     //get all registrations from Brugge from excel file
-    const registrations = excelParser.giveAllRegistrationsInJSON();
-    const bruggeRegistrations = excelParser.removeAllRegistrationNotFromBrugge(registrations);
+    const registrations = await excelParser.giveAllRegistrationsInJSON();
+    const bruggeRegistrations = await excelParser.removeAllRegistrationNotFromBrugge(registrations);
 
     //get the id of the type "Student" from the database
     const studentType = await mongo.getOnedocumentByFilter(

@@ -9,7 +9,7 @@
     "testScraper": "jest --setupFiles dotenv/config --testPathPattern=scraper",
     "testServer": "jest --setupFiles dotenv/config --testPathPattern=index",
     "testParser": "jest --setupFiles dotenv/config --testPathPattern=parser",
-    "testMongo": "jest --setupFiles dotenv/config --testPathPattern=mongoDatabase",
+    "testMongo": "jest --setupFiles dotenv/config --watch --testPathPattern=mongoDatabase",
     "testEncryptor": "jest --setupFiles dotenv/config --testPathPattern=encryptor",
     "start": "node index.js",
     "dockerbuild": "docker build -t gameroomexperienceserver-vhb .",

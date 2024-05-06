@@ -12,8 +12,8 @@ test("check if the excelParser class gets created", () => {
     expect(parser).toBeInstanceOf(excelParser);
 });
 
-test("check if the giveAllRegistrationsInJSON works", () =>  {
-    const registrations = parser.giveAllRegistrationsInJSON();
+test("check if the giveAllRegistrationsInJSON works", async () =>  {
+    const registrations = await parser.giveAllRegistrationsInJSON();
 
     const firstStudent = registrations[0];
     const student = firstStudent.Student;
@@ -29,9 +29,9 @@ test("check if the giveAllRegistrationsInJSON works", () =>  {
     expect(opleiding).toBe("PBA Elektronica-ICT (Kortrijk) (AO)");
 });
 
-test("check if the removeAllRegistrationNotFromBrugge works", () => {
-    const registrations = parser.giveAllRegistrationsInJSON();
-    const bruggeRegistrations = parser.removeAllRegistrationNotFromBrugge(registrations);
+test("check if the removeAllRegistrationNotFromBrugge works", async () => {
+    const registrations = await parser.giveAllRegistrationsInJSON();
+    const bruggeRegistrations = await parser.removeAllRegistrationNotFromBrugge(registrations);
 
     const firstStudent = bruggeRegistrations[0];
     const student = firstStudent.Student;
@@ -47,10 +47,10 @@ test("check if the removeAllRegistrationNotFromBrugge works", () => {
     expect(opleiding).toBe("PBA Elektronica-ICT (Brugge)");
 });
 
-test("check if the giveTheNamesFromAllRegistrations works", () => {
-    const registrations = parser.giveAllRegistrationsInJSON();
-    const bruggeRegistrations = parser.removeAllRegistrationNotFromBrugge(registrations);
-    const names = parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
+test("check if the giveTheNamesFromAllRegistrations works", async () => {
+    const registrations = await parser.giveAllRegistrationsInJSON();
+    const bruggeRegistrations = await parser.removeAllRegistrationNotFromBrugge(registrations);
+    const names = await parser.giveTheNamesFromAllRegistrations(bruggeRegistrations);
 
     const firstStudent = names[0];
     const firstName = firstStudent.firstName;
@@ -60,28 +60,28 @@ test("check if the giveTheNamesFromAllRegistrations works", () => {
     expect(lastName).toBe("Starkov");
 });
 
-test("check if findPersonInRegistrations returns the correct person", () => {
-    const registrations = parser.giveAllRegistrationsInJSON();
+test("check if findPersonInRegistrations returns the correct person", async () => {
+    const registrations = await parser.giveAllRegistrationsInJSON();
 
     const person = {
         firstName: "Olivier",
         lastName: "Van Ransbeeck"
       }
 
-    const result = parser.findPersonInRegistrations(person, registrations);
+    const result = await parser.findPersonInRegistrations(person, registrations);
 
     expect(result.Student).toEqual('0957797');
 });
 
-test("check if findPersonInRegistrations returns undefined if person is not found", () => {
-    const registrations = parser.giveAllRegistrationsInJSON();
+test("check if findPersonInRegistrations returns undefined if person is not found", async () => {
+    const registrations = await parser.giveAllRegistrationsInJSON();
 
     const person = {
         firstName: "xxxx",
         lastName: "yyyy"
       }
 
-    const result = parser.findPersonInRegistrations(person, registrations);
+    const result = await parser.findPersonInRegistrations(person, registrations);
 
     expect(result).toBeUndefined();
 });
