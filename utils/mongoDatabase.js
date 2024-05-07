@@ -25,6 +25,7 @@ module.exports = class MongoDatabase {
             UserData: {
                 dbName: "UserData",
                 users: "users",
+                oldUsers: "oldUsers",
                 roles: "roles",
                 courses: "courses",
                 types: "types",
@@ -43,6 +44,84 @@ module.exports = class MongoDatabase {
           }
     }
 
+    //This function checks if a database exists and creates it if it does not
+    checkorCreateDatabase = async (structure) => {
+        let result = undefined;
+        try {
+            await this.mongoClient.connect();
+            result = await this.mongoClient.db(structure.dbName).command({ ping: 1 });
+        } catch (err) {
+            throw err;
+        } finally {
+            await this.mongoClient.close();
+        }
+        return result;
+    }
+
+    //This function adds a collection to a database
+    addCollection = async (structure, collection) => {
+        let result = undefined;
+        try {
+            await this.mongoClient.connect();
+            result = await this.mongoClient.db(structure.dbName).createCollection(collection);
+        } catch (err) {
+            throw err;
+        } finally {
+            await this.mongoClient.close();
+        }
+        return result;
+    }
+
+    //This function add multiple collections to a database
+    addMultipleCollections = async (structure) => {
+        let result = undefined
+        let collections = []
+
+        //iterate over the structure object and add all collections to the database
+        for (let collection in structure) {
+            //skip dbName
+            if (collection === "dbName") {continue;}
+            const collectionName = structure[collection];
+
+            try {
+                await this.mongoClient.connect();
+                result = await this.mongoClient.db(structure.dbName).createCollection(collectionName);
+            } catch (err) {
+                throw err;
+            } finally {
+                await this.mongoClient.close();
+            }
+        }
+     
+        return result;
+    }
+
+    //This function creates the database and collections if they do not exist
+    createDatabaseAndCollections = async () => {
+        //check if RoomsData database exists
+        let structures = [this.dbStructure.RoomsData, this.dbStructure.UserData]
+        
+        //check if database exists and create if not
+        for (let structure of structures) {
+            console.log("Trying to create database: ", structure.dbName)
+            let result = await this.checkorCreateDatabase(structure.dbName);
+            if (result.ok) {
+                console.log("Database exists or was created successfully")
+                console.log("Adding collections to database: ", structure.dbName)
+                try {
+                    await this.addMultipleCollections(structure);
+                    console.log("Collections added successfully")
+                } catch (err) {
+                    throw new Error("Collections could not be created")
+                }
+            } else {
+                throw new Error("Database could not be created")
+            }
+        }        
+    }
+
+    //dbName must be a string like this: this.dbStructure.UserData.dbName
+    //collection must be a string like this: this.dbStructure.UserData.users
     getAllDocuments = async (dbName, collection) => {
         let result = undefined;
 

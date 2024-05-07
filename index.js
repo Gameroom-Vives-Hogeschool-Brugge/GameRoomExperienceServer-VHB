@@ -473,18 +473,62 @@ app.delete("/users", async (req, res) => {
   const userId = new mongodb.ObjectId(req.body.encryptedUserId);
 
   //get the names of the databases and collections
+  const userDbName = mongo.dbStructure.UserData.dbName;
+  const roomsDbName = mongo.dbStructure.RoomsData.dbName;
   const usersCollection = mongo.dbStructure.UserData.users;
-  const dbName = mongo.dbStructure.UserData.dbName;
+  const oldUsersCollection = mongo.dbStructure.UserData.oldUsers;
+  const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+  const oldReservationsCollection = mongo.dbStructure.RoomsData.oldReservations;
+
+
+  //move the user to the oldUsers collection
+  const userToMove = await mongo.moveDocument(
+    { _id: userId },
+    userDbName,
+    usersCollection,
+    oldUsersCollection
+  );
+
+  //check if the user has been moved, otherwise send an error
+  if (!userToMove) {
+    logger.error("Gebruiker kon niet verplaatst worden: "+ userId);
+    return res.status(500).send("User could not be moved first");
+  }
+
+  //find all reservations of the user
+  const reservations = await mongo.getDocumentsByFilter(
+    { user: userId },
+    roomsDbName,
+    reservationsCollection
+  );
+
+  //check if the user has reservations, otherwise send an error
+  if (reservations) {
+    for (let reservation of reservations) {
+      const reservationToMove = await mongo.moveDocument(
+        { _id: reservation._id },
+        roomsDbName,
+        reservationsCollection,
+        oldReservationsCollection
+      );
+
+      //check if the reservation has been moved, otherwise send an error
+      if (!reservationToMove) {
+        logger.error("Reservatie kon niet verplaatst worden: "+ reservation._id);
+        return res.status(500).send("Reservation could not be moved");
+      }
+    }
+  }
 
   //delete the user
   const deleteResponse = await mongo.deleteDocument(
     { _id: userId },
-    dbName,
+    userDbName,
     usersCollection
   );
 
   //check if the user has been deleted, otherwise send an error
-  if (deleteResponse.acknowledged) {
+  if (deleteResponse.acknowledged) { 
     logger.info("Gebruiker verwijderd: "+ userId);
     return res.status(200).send("User deleted");
   } else {
@@ -840,6 +884,10 @@ app.listen(process.env.PORT, () => {
   reservationLogger.createLogFile();
   verifyLogger.createLogFile();
   openDoorLogger.createLogFile();
+
+  //check if the database exists, otherwise create it
+  const temporaryMongo = new MongoDatabase();
+  temporaryMongo.createDatabaseAndCollections();
 });
 
 module.exports.app = app;
