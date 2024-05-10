@@ -61,6 +61,11 @@ app.use((req, res, next) => {
 });
 
 //routes
+app.get("/", (req, res) => {
+  res.status(200);
+  res.send("Server is running");
+});
+
 app.post("/test", async (req, res) => {
 });
 
@@ -316,11 +321,6 @@ app.post("/registrations", async (req, res) => {
     logger.error("Gebruiker niet gevonden in de excel file: " + registeredPerson);
     return res.status(404).send("Person not found");
   }
-});
-
-app.get("/started", (req, res) => {
-  res.status(200);
-  res.send("Server is running");
 });
 
 app.get("/user/verify/:cardNumber/:token", async (req, res) => {
@@ -868,11 +868,13 @@ app.get("/logfiles", async(req, res) => {
   return res.status(200).send(encryptedLogfiles);
 })
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, async () => {
   console.log(`Example app listening on port ${process.env.PORT}`);
   console.log("Environment: " + process.env.NODE_ENV);
 
   //check if the logfiles exist, otherwise create them
+  console.log("Creating logfiles")
+
   const loginLogger = new Logger("login.log");
   const registrationLogger = new Logger("registrations.log");
   const reservationLogger = new Logger("reservations.log");
@@ -884,10 +886,24 @@ app.listen(process.env.PORT, () => {
   reservationLogger.createLogFile();
   verifyLogger.createLogFile();
   openDoorLogger.createLogFile();
+  
+  console.log("Logfiles created")
 
   //check if the database exists, otherwise create it
+  console.log("Creating database and collections")
+
   const temporaryMongo = new MongoDatabase();
-  temporaryMongo.createDatabaseAndCollections();
+  await temporaryMongo.createDatabaseAndCollections();
+
+  console.log("Database and collections created")
+
+  //populate the database with the roles, types and courses
+  console.log("Starting to populate the database")
+  
+  const data = require("./storage/data.json");
+  await temporaryMongo.populateDatabase(data);
+  
+  console.log("Database populated completed")
 });
 
 module.exports.app = app;

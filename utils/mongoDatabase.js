@@ -75,7 +75,6 @@ module.exports = class MongoDatabase {
     //This function add multiple collections to a database
     addMultipleCollections = async (structure) => {
         let result = undefined
-        let collections = []
 
         //iterate over the structure object and add all collections to the database
         for (let collection in structure) {
@@ -103,22 +102,67 @@ module.exports = class MongoDatabase {
         
         //check if database exists and create if not
         for (let structure of structures) {
-            console.log("Trying to create database: ", structure.dbName)
+            console.log(structure.dbName, ": Trying to create the database")
             let result = await this.checkorCreateDatabase(structure.dbName);
             if (result.ok) {
-                console.log("Database exists or was created successfully")
-                console.log("Adding collections to database: ", structure.dbName)
+                console.log(structure.dbName,": Database exists or was created successfully")
+                console.log(structure.dbName,": Adding collections")
                 try {
                     await this.addMultipleCollections(structure);
-                    console.log("Collections added successfully")
+                    console.log(structure.dbName,": Collections added successfully")
                 } catch (err) {
-                    throw new Error("Collections could not be created")
+                    throw new Error(structure.dbName, ": Collections could not be created")
                 }
             } else {
-                throw new Error("Database could not be created")
+                throw new Error(structure.dbName, ": Database could not be created")
             }
         }        
     }
+
+    //populate the database with data from a JSON File
+    populateDatabase = async (data) => {
+        try {
+            // Connect to the MongoDB client
+            await this.mongoClient.connect();
+    
+            // Iterate over the array of objects
+            for (let item of data) {
+                // Get the database name from the object's key
+                const dbName = Object.keys(item)[0];
+                console.log(dbName, ": Inserting data into database");
+    
+                // Iterate over the collections in the current object
+                for (let collectionKey in item[dbName]) {
+                    // Get the collection name from the current object's key
+                    const collectionName = collectionKey;
+    
+                    // Get the data for the current collection
+                    const dataToInsert = item[dbName][collectionKey];
+    
+                    // Insert each document in the collection one by one
+                    // Insert only if data doesn't already exist
+                    let docsInserted = 0;
+                    let totalDocs = dataToInsert.length;
+                    for (let doc of dataToInsert) {
+                        const existingDoc = await this.mongoClient.db(dbName).collection(collectionName).findOne(doc);
+                        if (!existingDoc) {
+                            await this.mongoClient.db(dbName).collection(collectionName).insertOne(doc);
+                            docsInserted++;
+                        }
+                    }
+                    console.log(collectionName, ": Inserted", docsInserted, "out of", totalDocs, "documents. ", totalDocs-docsInserted, "documents already exist in the collection");
+                }
+            }
+        } catch (err) {
+            // Handle errors
+            console.error("Error adding data to database:", err);
+        } finally {
+            // Close the MongoDB client connection
+            await this.mongoClient.close();
+        }
+    }
+       
+        
 
     //dbName must be a string like this: this.dbStructure.UserData.dbName
     //collection must be a string like this: this.dbStructure.UserData.users

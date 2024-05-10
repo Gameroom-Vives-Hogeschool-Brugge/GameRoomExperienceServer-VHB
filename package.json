@@ -16,7 +16,8 @@
     "dockerrun": "docker run -p 3000:3000 -d gameroomexperienceserver-vhb",
     "dockercomposeup": "docker compose up -d",
     "dockercomposestop": "docker compose stop",
-    "dockercomposebuildandup": "docker compose up -d --build"
+    "dockercomposebuildandup": "docker compose up -d --build",
+    "dockercomposeAppbuildandup": "docker compose up app -d --build"
   },
   "keywords": [],
   "author": "Olivier Van Ransbeeck",

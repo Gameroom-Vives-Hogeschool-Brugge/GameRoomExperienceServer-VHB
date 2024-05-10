@@ -1,0 +1,81 @@
+[
+  {
+    "UserData":
+      {
+        "courses": [
+          {
+            "course": "PBA Electronica-ICT (Kortrijk) (AO)",
+            "description": "A course about Electronics-ICT from home",
+            "location": "Kortrijk"
+          },
+          {
+            "course": "Not Applicable",
+            "description": "For persons not registered as students",
+            "location": "Not Applicable"
+          },
+          {
+            "course": "PBA Elektronica-ICT (Brugge)",
+            "description": "A course about Electronics-ICT from Brugge",
+            "location": "Brugge"
+          }
+        ],
+        "roles": [
+            {
+              "role": "Student"
+            },
+            {
+              "role": "Prof"
+            },
+            {
+              "role": "Admin"
+            }
+        ],
+        "types": [
+          {
+            "type": "Student"
+          },
+          {
+            "type": "Prof"
+          },
+          {
+            "type": "Exception"
+          }
+        ]
+      }
+  },
+  {
+    "RoomsData":
+      {
+        "Rooms": [
+          {
+            "description": "Console",
+            "maxStudents": 2,
+            "earliestReservationTime": "09:00",
+            "latestReservationTime": "17:00",
+            "roomNumber": 1
+          },
+          {
+            "description": "VR Bril",
+            "maxStudents": 2,
+            "earliestReservationTime": "09:00",
+            "latestReservationTime": "17:00",
+            "roomNumber": 2
+          },
+          {
+            "description": "Computer 1",
+            "maxStudents": 2,
+            "earliestReservationTime": "09:00",
+            "latestReservationTime": "17:00",
+            "roomNumber": 2
+          },
+          {
+            "description": "Computer 2",
+            "maxStudents": 2,
+            "earliestReservationTime": "09:00",
+            "latestReservationTime": "17:00",
+            "roomNumber": 2
+          }
+        ]
+      }
+  }
+]

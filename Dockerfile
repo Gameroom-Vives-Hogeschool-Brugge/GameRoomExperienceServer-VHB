@@ -17,6 +17,9 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+# Set the user to root
+USER 0:0
+
 # Expose the port the app runs on
 CMD [ "node", "index.js" ]
 

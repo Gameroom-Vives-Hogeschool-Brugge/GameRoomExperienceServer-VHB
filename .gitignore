@@ -143,17 +143,10 @@ dist
 .svelte-kit
 
 #excelfiles
-storage/*.xlsx
-examples/*.xlsx
-
-#storage json files
-storage/*.json
-examples/*.json
-
-#ssl
-ssl/*
+examples
 
 #mongoFiles
-data/*
+data
+mongo_data
 
 # End of https://www.toptal.com/developers/gitignore/api/node

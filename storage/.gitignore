@@ -1,0 +1,9 @@
+#Log files
+login.log
+opendoor.log
+registrations.log
+reservations.log
+verify.log
+
+#StudentList
+StudentList.xlsx
