@@ -16,7 +16,7 @@ module.exports = class Scraper {
   }
 
   getPage = async (url) => {
-    this.browser = await this.puppeteer.launch({ headless: "new" });
+    this.browser = await this.puppeteer.launch({ headless: "new", args: ['--no-sandbox'] });
     const page = await this.browser.newPage();
 
     await page.goto(url);
