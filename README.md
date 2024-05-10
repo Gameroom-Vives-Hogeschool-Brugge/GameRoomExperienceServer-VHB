@@ -55,15 +55,10 @@ git clone https://github.com/Gameroom-Vives-Hogeschool-Brugge/GameRoomExperience
 
 1. Copy the environment variables file (keys.env) to the main application folder.
 
-2. Copy the storage and examples folders to the main application folder.
+2. Copy the examples folder to the main application folder.
 
+3. Copy the StudentList.xlsx file to the "storage" folder.
 
-
-## Install the node_modules
-
-```bash
-npm install
-```
 
 ## Deploy all containers
 
@@ -71,7 +66,19 @@ npm install
 docker compose up -d --build
 ```
 
-## Import the JSON files to the MongoDB database
+## Check if the server deploys correctly
+
+1. The server will tell you in which mode it runs (development or prod), this can be changed in the keys.env file.
+
+2. The server will tell you which port it uses, this can be changed in the keys.env file.
+
+3. The server will create all log files if they are not created yet.
+
+4. The server will create all databases and collections.
+
+5. The server will populate the database with the initial data required to run the application.
+
+## MongoDb Structure and examples
 
 ### RoomsData.Rooms
 
