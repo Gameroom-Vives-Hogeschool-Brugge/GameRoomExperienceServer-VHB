@@ -13,6 +13,7 @@ const sendEmail = require("./utils/email");
 const MongoDatabase = require("./utils/mongoDatabase.js");
 const Encryptor = require("./utils/encryptor");
 const Logger = require("./utils/logger");
+const MqttHandler = require("./utils/mqttHandler");
 
 
 //load cronjobs
@@ -67,6 +68,9 @@ app.get("/", (req, res) => {
 });
 
 app.post("/test", async (req, res) => {
+});
+
+app.get("/test", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
@@ -179,9 +183,6 @@ app.post("/login", async (req, res) => {
     //check if the cardnumber is a student or a prof
     const studentFound = await scraper.findElement(page, scraper.studentXPath);
     const profFound = await scraper.findElement(page, scraper.profXPath);
-
-    console.log(studentFound);
-    console.log(profFound);
 
     //if the cardnumber is a student, check if the student is from Brugge
     if (studentFound == "Student") {
@@ -638,13 +639,26 @@ app.get("/courses", async (req, res) => {
 });
 
 app.post("/opendoor", async (req, res) => {
+  //create a new instance of the required classes
   const logger = new Logger("opendoor.log");
+  const mqtt = new MqttHandler();
 
-  //wait for 2 seconds then send a response
-  setTimeout(() => {
-    logger.info("Door opened");
-    return res.status(200).send("Door opened");
-  }, 2000);
+  //declare the variables
+  const durationOfOpeningInSeconds = 10;
+
+  //connect to the mqtt broker
+  mqtt.connect();
+
+  //send a message to the mqtt broker to open the door
+  try {
+    mqtt.sendMessage(mqtt.switchTopic, `on,${durationOfOpeningInSeconds}`);
+
+    logger.info("Deur geopend");
+    res.status(200).send("Door opened");
+  } catch (error) {
+    logger.error("Er is iets fout gegaan bij het openen van de deur");
+    res.status(500).send("Something went wrong");
+  }  
 });
 
 app.get("/rooms", async (req, res) => {
