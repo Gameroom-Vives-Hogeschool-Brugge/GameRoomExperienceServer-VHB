@@ -9,9 +9,9 @@ services:
     volumes:
       - ./storage:/app/storage
     ports:
-      - "3000:3000"
+      - "${BACK_END_PORT}:3000"
     env_file:
-      - keys.env
+      - .env
   mongo:
     image: mongo
     restart: always

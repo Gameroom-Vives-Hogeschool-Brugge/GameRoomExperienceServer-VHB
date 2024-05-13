@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 
 //load the environment variables
 dotenv.config({
-  path: "./keys.env",
+  path: "./.env",
 });
 
 //mqtt

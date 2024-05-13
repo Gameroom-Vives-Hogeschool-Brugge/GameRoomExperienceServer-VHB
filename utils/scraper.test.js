@@ -3,7 +3,7 @@ let scraper = undefined;
 const dotenv = require("dotenv");
 
 dotenv.config({
-    path: "./keys.env"
+    path: "./.env"
 });
 
 let studenKortrijkUrl = process.env.STUDENT_KORTRIJK_URL;

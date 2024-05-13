@@ -7,7 +7,7 @@ const path = require("path");
 class EmailParser {
   constructor() {
     dotenv.config({
-      path: "./keys.env",
+      path: "./.env",
     });
 
     this.imap = new Imap({

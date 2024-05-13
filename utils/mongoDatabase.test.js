@@ -3,7 +3,7 @@ const MongoDatabase = require('./mongoDatabase');
 let mongo = undefined;
 
 dotenv.config({
-    path: "./keys.env"
+    path: "./.env"
 });
 
 beforeEach(() => {

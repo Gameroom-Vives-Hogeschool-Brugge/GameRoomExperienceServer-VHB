@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 dotenv.config({
-    path: "./keys.env"
+    path: "./.env"
 });
 
 

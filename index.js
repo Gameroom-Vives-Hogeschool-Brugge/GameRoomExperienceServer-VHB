@@ -21,7 +21,7 @@ require("./utils/cronJobs");
 
 //load the environment variables
 dotenv.config({
-  path: "./keys.env",
+  path: "./.env",
 });
 
 let corsOptions = {};
@@ -882,8 +882,8 @@ app.get("/logfiles", async(req, res) => {
   return res.status(200).send(encryptedLogfiles);
 })
 
-app.listen(process.env.PORT, async () => {
-  console.log(`Example app listening on port ${process.env.PORT}`);
+app.listen(process.env.BACK_END_PORT, async () => {
+  console.log(`Example app listening on port ${process.env.BACK_END_PORT}`);
   console.log("Environment: " + process.env.NODE_ENV);
 
   //check if the logfiles exist, otherwise create them

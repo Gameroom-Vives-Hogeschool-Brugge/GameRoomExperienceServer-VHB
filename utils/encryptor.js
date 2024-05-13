@@ -2,7 +2,7 @@
 const dotenv = require('dotenv');
 
 dotenv.config({
-    path: "./keys.env"
+    path: "./.env"
 });
 
 module.exports = class Encryptor {
