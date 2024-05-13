@@ -9,7 +9,7 @@ services:
     volumes:
       - ./storage:/app/storage
     ports:
-      - "${BACK_END_PORT}:3000"
+      - "${BACK_END_PORT}:${BACK_END_PORT}"
     env_file:
       - .env
   mongo:
