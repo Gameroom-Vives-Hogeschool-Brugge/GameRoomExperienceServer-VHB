@@ -9,12 +9,7 @@ dotenv.config({
 
 module.exports = class MongoDatabase {
     constructor() {
-        this.mongoClient = new MongoClient(process.env.LOCAL_MONGODB_URI, {
-            serverApi: {
-              version: ServerApiVersion.v1,
-              strict: true,
-              deprecationErrors: true,
-            }});
+        this.mongoClient = new MongoClient(process.env.LOCAL_MONGODB_URI)
         this.dbStructure = {
             RoomsData: {
                 dbName: "RoomsData",
@@ -63,7 +58,7 @@ module.exports = class MongoDatabase {
         let result = undefined;
         try {
             await this.mongoClient.connect();
-            result = await this.mongoClient.db(structure.dbName).createCollection(collection);
+            result = await this.mongoClient.db(structure.dbName).collection(collection);
         } catch (err) {
             throw err;
         } finally {
@@ -84,7 +79,7 @@ module.exports = class MongoDatabase {
 
             try {
                 await this.mongoClient.connect();
-                result = await this.mongoClient.db(structure.dbName).createCollection(collectionName);
+                result = await this.mongoClient.db(structure.dbName).collection(collectionName);
             } catch (err) {
                 throw err;
             } finally {
@@ -162,8 +157,6 @@ module.exports = class MongoDatabase {
         }
     }
        
-        
-
     //dbName must be a string like this: this.dbStructure.UserData.dbName
     //collection must be a string like this: this.dbStructure.UserData.users
     getAllDocuments = async (dbName, collection) => {
