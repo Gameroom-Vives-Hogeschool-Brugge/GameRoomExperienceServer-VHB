@@ -1,6 +1,6 @@
 //import environment variables
 const dotenv = require("dotenv");
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 dotenv.config({
     path: "./.env"
