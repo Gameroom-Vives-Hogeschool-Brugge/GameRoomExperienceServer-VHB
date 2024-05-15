@@ -78,6 +78,8 @@ docker compose up -d --build
 
 5. The server will populate the database with the initial data required to run the application.
 
+6. The server will create the first administrator if this user does not already exist
+
 ## MongoDb Structure and examples
 
 ### RoomsData.Rooms
