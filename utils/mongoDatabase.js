@@ -25,7 +25,8 @@ module.exports = class MongoDatabase {
                 courses: "courses",
                 types: "types",
             }
-        }
+        },
+        this.consoleLogPrefix = "       -"
     }
 
     run = async () => {
@@ -97,21 +98,94 @@ module.exports = class MongoDatabase {
         
         //check if database exists and create if not
         for (let structure of structures) {
-            console.log(structure.dbName, ": Trying to create the database")
+            console.log(this.consoleLogPrefix + structure.dbName, ": Trying to create the database")
             let result = await this.checkorCreateDatabase(structure.dbName);
             if (result.ok) {
-                console.log(structure.dbName,": Database exists or was created successfully")
-                console.log(structure.dbName,": Adding collections")
+                console.log(this.consoleLogPrefix + structure.dbName,": Database exists or was created successfully")
+                console.log(this.consoleLogPrefix + structure.dbName,": Adding collections")
                 try {
                     await this.addMultipleCollections(structure);
-                    console.log(structure.dbName,": Collections added successfully")
+                    console.log(this.consoleLogPrefix + structure.dbName,": Collections added successfully")
                 } catch (err) {
-                    throw new Error(structure.dbName, ": Collections could not be created")
+                    throw new Error(this.consoleLogPrefix + structure.dbName, ": Collections could not be created")
                 }
             } else {
-                throw new Error(structure.dbName, ": Database could not be created")
+                throw new Error(this.consoleLogPrefix + structure.dbName, ": Database could not be created")
             }
         }        
+    }
+
+    //This function creates the first administrator if it doesn't exist yet. It needs a logger class and an encryptor class
+    createFirstAdministrator = async (logger, encryptor) => {
+        //check if the Administrator already exists
+        const user = await this.getOnedocumentByFilter(
+            { cardNumber: process.env.ADMINISTRATOR_VIVES_CARD_NUMBER },
+            this.dbStructure.UserData.dbName,
+            this.dbStructure.UserData.users
+        );
+
+        if (user != null) {
+            return false
+        }
+
+        //get the roleId of Administrator
+        const roleObject = await this.getOnedocumentByFilter(
+            { role: "Admin" },
+            this.dbStructure.UserData.dbName,
+            this.dbStructure.UserData.roles
+        );
+
+        const roleId = roleObject._id
+
+        //get the typeId of Exception
+        const typeObject = await this.getOnedocumentByFilter(
+            { type: "Exception" },
+            this.dbStructure.UserData.dbName,
+            this.dbStructure.UserData.types
+        );
+
+        const typeId = typeObject._id
+
+        //get the courseId of N/A
+        const courseObject = await this.getOnedocumentByFilter(
+            { course: "Not Applicable" },
+            this.dbStructure.UserData.dbName,
+            this.dbStructure.UserData.courses
+        );
+
+        const courseId = courseObject._id
+
+        //create a token
+        const token = encryptor.createToken();
+
+        const newUser = {
+        firstName: process.env.ADMINISTRATOR_FIRST_NAME,
+        lastName: process.env.ADMINISTRATOR_LAST_NAME,
+        email: process.env.ADMINISTRATOR_VIVES_EMAIL,
+        idNumber: process.env.ADMINISTRATOR_VIVES_ID_NUMBER,
+        cardNumber: process.env.ADMINISTRATOR_VIVES_CARD_NUMBER,
+        role: roleId,
+        type: typeId,
+        course: courseId,
+        token: token,
+        verified: true,
+        };
+            
+        //insert the user into the database
+        const insertResponse = await this.insertDocument(
+            newUser,
+            this.dbStructure.UserData.dbName,
+            this.dbStructure.UserData.users
+        );
+        
+        //check if the user has been added to the database, otherwise send an error
+        if (!insertResponse.acknowledged) {
+            logger.error("Gebruiker kon niet toegevoegd worden: " + JSON.stringify(newUser));
+            return false
+        }
+
+        logger.info("Gebruiker toegevoegd: " + JSON.stringify(newUser));
+        return true
     }
 
     //populate the database with data from a JSON File
@@ -124,7 +198,7 @@ module.exports = class MongoDatabase {
             for (let item of data) {
                 // Get the database name from the object's key
                 const dbName = Object.keys(item)[0];
-                console.log(dbName, ": Inserting data into database");
+                console.log(this.consoleLogPrefix + dbName, ": Inserting data into database");
     
                 // Iterate over the collections in the current object
                 for (let collectionKey in item[dbName]) {
@@ -145,7 +219,7 @@ module.exports = class MongoDatabase {
                             docsInserted++;
                         }
                     }
-                    console.log(collectionName, ": Inserted", docsInserted, "out of", totalDocs, "documents. ", totalDocs-docsInserted, "documents already exist in the collection");
+                    console.log(this.consoleLogPrefix + collectionName, ": Inserted", docsInserted, "out of", totalDocs, "documents. ", totalDocs-docsInserted, "documents already exist in the collection");
                 }
             }
         } catch (err) {

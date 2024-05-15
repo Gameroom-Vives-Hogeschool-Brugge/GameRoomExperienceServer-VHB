@@ -29,7 +29,7 @@ let corsOptions = {};
 //cors options
 if (process.env.NODE_ENV == "production") {
   corsOptions = {
-    origin: "http://localhost:8080",
+    origin:  process.env.FRONT_END_URL + process.env.FRONT_END_PORT,
     optionsSuccessStatus: 200,
   };
 } else {
@@ -301,7 +301,7 @@ app.post("/registrations", async (req, res) => {
         }
 
         //send email to user
-        const message = `${process.env.BASE_URL}/user/verify/${user.cardNumber}/${token}`;
+        const message = `${process.env.BACK_END_URL}${process.env.BACK_END_PORT}/user/verify/${user.cardNumber}/${token}`;
         await sendEmail(user.email, "Verify Email", message);
 
         //log the user and token
@@ -452,7 +452,7 @@ app.post("/users", async (req, res) => {
    }
  
    //send an email to the user
-   const message = `${process.env.BASE_URL}/user/verify/${newUser.cardNumber}/${token}`;
+   const message = `${process.env.BACK_END_URL}${process.env.BACK_END_PORT}/user/verify/${newUser.cardNumber}/${token}`;
    try {
      await sendEmail(newUser.email, "Verify Email", message);
      logger.info("Gebruiker en token toegevoegd: " + JSON.stringify(newUser) + " " + token);
@@ -916,8 +916,38 @@ app.listen(process.env.BACK_END_PORT, async () => {
   
   const data = require("./storage/data.json");
   await temporaryMongo.populateDatabase(data);
+
+  console.log("Database population completed")
+
+  //populate the database with the first Admninistrator
+  console.log("Creating First Administrator")
   
-  console.log("Database populated completed")
+  const tempologger = new Logger("registrations.log");
+  const tempoEncryptor = new Encryptor();
+  const creationSucceeded = await temporaryMongo.createFirstAdministrator(tempologger, tempoEncryptor);
+
+  if (creationSucceeded) {
+    //fetch the user from the database
+    const user = await temporaryMongo.getOnedocumentByFilter(
+      { cardNumber: process.env.ADMINISTRATOR_VIVES_CARD_NUMBER },
+      temporaryMongo.dbStructure.UserData.dbName,
+      temporaryMongo.dbStructure.UserData.users
+    );
+
+    //send an email to the user
+    const message = "Jouw account werd succesvol aangemaakt";
+    try {
+      await sendEmail(user.email, message);
+      tempologger.info("Gebruiker en token toegevoegd: " + JSON.stringify(newUser) + " " + token);
+    } catch (error) {
+      tempologger.error("Er is iets fout gegaan bij het versturen van de email: " + error);
+    }
+
+    console.log(temporaryMongo.consoleLogPrefix + "First Administrator: created.")
+  } else {
+    console.log(temporaryMongo.consoleLogPrefix + "First Administrator: already exists")
+  }
+  console.log("Creation of First Administrator completed")
 });
 
 module.exports.app = app;

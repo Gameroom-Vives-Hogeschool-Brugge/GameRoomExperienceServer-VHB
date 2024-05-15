@@ -15,7 +15,8 @@ services:
   mongo:
     image: mongo:4.4.17
     restart: always
-    ports:
-      - "27017:27017"
+    #uncomment the next 2 lines when in development to access the database locally
+#    ports:
+#      - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
