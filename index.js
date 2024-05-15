@@ -29,7 +29,7 @@ let corsOptions = {};
 //cors options
 if (process.env.NODE_ENV == "production") {
   corsOptions = {
-    origin:  process.env.FRONT_END_URL + process.env.FRONT_END_PORT,
+    origin:  process.env.FRONT_END_URL,
     optionsSuccessStatus: 200,
   };
 } else {
