@@ -17,7 +17,8 @@
     "dockercomposeup": "docker compose up -d",
     "dockercomposestop": "docker compose stop",
     "dockercomposebuildandup": "docker compose up -d --build",
-    "dockercomposeAppbuildandup": "docker compose up app -d --build"
+    "dockercomposeAppbuildandup": "docker compose up app -d --build",
+    "dockercomposeMongobuildandup": "docker compose up mongo -d --build"
   },
   "keywords": [],
   "author": "Olivier Van Ransbeeck",
@@ -30,6 +31,7 @@
     "crypto-js": "^4.2.0",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
+    "html-to-text": "^9.0.5",
     "imap": "^0.8.19",
     "jest": "^29.7.0",
     "joi": "^17.12.1",

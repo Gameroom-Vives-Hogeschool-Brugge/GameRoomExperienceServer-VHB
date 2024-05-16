@@ -9,12 +9,11 @@ const mongodb = require("mongodb");
 //utils
 const urlScraper = require("./utils/scraper.js");
 const excelParser = require("./utils/excelParser.js");
-const sendEmail = require("./utils/email");
 const MongoDatabase = require("./utils/mongoDatabase.js");
 const Encryptor = require("./utils/encryptor");
 const Logger = require("./utils/logger");
 const MqttHandler = require("./utils/mqttHandler");
-
+const EmailSender = require("./utils/email");
 
 //load cronjobs
 require("./utils/cronJobs");
@@ -135,7 +134,6 @@ app.post("/login", async (req, res) => {
 
     //log the user
     logger.info("Gebruiker ingelogd: " + JSON.stringify(dataToBeSend))
-
     return res.status(297).send(encryptedObject); // voor verwijzing naar persoonlijke pagina
   }
 
@@ -241,6 +239,7 @@ app.post("/registrations", async (req, res) => {
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
   const logger = new Logger("registrations.log");
+  const emailSender = new EmailSender();
 
   //get data from the request
   const cardNumber = req.body.cardNumber;
@@ -301,8 +300,7 @@ app.post("/registrations", async (req, res) => {
         }
 
         //send email to user
-        const message = `${process.env.BACK_END_URL}${process.env.BACK_END_PORT}/user/verify/${user.cardNumber}/${token}`;
-        await sendEmail(user.email, "Verify Email", message);
+        await emailSender.sendVerificationEmail(user.email ,user.cardNumber, token);
 
         //log the user and token
         logger.info("Gebruiker en token toegevoegd: " + JSON.stringify(userObject) + " " + token);
@@ -398,6 +396,7 @@ app.post("/users", async (req, res) => {
   const mongo = new MongoDatabase();
   const encryptor = new Encryptor();
   const logger = new Logger("registrations.log");
+  const emailSender = new EmailSender();
 
   //get the user data from the request
   const encryptedUser = req.body.encryptedUser;
@@ -452,12 +451,12 @@ app.post("/users", async (req, res) => {
    }
  
    //send an email to the user
-   const message = `${process.env.BACK_END_URL}${process.env.BACK_END_PORT}/user/verify/${newUser.cardNumber}/${token}`;
    try {
-     await sendEmail(newUser.email, "Verify Email", message);
+     await emailSender.sendUserCreatedEmail(newUser.email);
      logger.info("Gebruiker en token toegevoegd: " + JSON.stringify(newUser) + " " + token);
-     return res.status(201).send("An Email sent to your account please verify");
+     return res.status(201).send("The account has been created. An email has been sent to the user.");
    } catch (error) {
+      console.log(error);
      logger.error("Er is iets fout gegaan bij het versturen van de email: " + error);
      return res.status(500).send("Something went wrong");
    }
@@ -722,6 +721,7 @@ app.post("/reservations", async (req, res) => {
   //create a new instance of the required classes
   const mongo = new MongoDatabase();
   const reservationLogger = new Logger("reservations.log");
+  const emailSender = new EmailSender();
 
   //get the reservation data from the request
   const reservation = req.body;
@@ -729,10 +729,21 @@ app.post("/reservations", async (req, res) => {
   //create a mongoDb ObjectId from a string
   const reservationRoomId = new mongodb.ObjectId(reservation.roomId);
   const reservationDate = new Date(reservation.date);
+  const reservationDay = reservationDate.getUTCDate();
+  const reservationMonth = reservationDate.getUTCMonth();
+  const reservationYear = reservationDate.getUTCFullYear();
 
-  //get all reservations for the room
+  const startOfReservationDate = new Date(Date.UTC(reservationYear, reservationMonth, reservationDay, 0, 0, 0));
+  const endOfReservationDate = new Date(Date.UTC(reservationYear, reservationMonth, reservationDay + 1, 0, 0, 0));
+
+  //get all reservations for the room on that day
   const checkReservationsForRoom = await mongo.getDocumentsByFilter(
-    { room: reservationRoomId },
+    { room: reservationRoomId,
+      "date": {
+        "$gte": startOfReservationDate,
+        "$lt": endOfReservationDate
+      }
+     },
     mongo.dbStructure.RoomsData.dbName,
     mongo.dbStructure.RoomsData.reservations
   );
@@ -744,38 +755,34 @@ app.post("/reservations", async (req, res) => {
   //if valid add reservation to database
   //if not valid send an error message
   for (let storedReservation of checkReservationsForRoom) {
-    //check day first using days, months and years only
-    if (
-      storedReservation.date.getUTCDay() === reservationDate.getUTCDay() &&
-      storedReservation.date.getUTCMonth() === reservationDate.getUTCMonth() &&
-      storedReservation.date.getUTCFullYear() === reservationDate.getUTCFullYear()
-    ) {
-      //get the hours and duration of the stored reservation
-      const storedHours = storedReservation.date.getUTCHours();
-      const storedDuration = storedReservation.duration;
+    //get the hours and duration of the stored reservation
+    const storedStart = storedReservation.date.getUTCHours();
+    const storedDuration = storedReservation.duration;
+    const storedEnd = storedStart + storedDuration;
 
-      //get the hours and duration minutes of the new reservation
-      const newHours = reservationDate.getUTCHours();
-      const newDuration = reservation.duration;
+    //get the hours and duration minutes of the new reservation
+    const newStart = reservationDate.getUTCHours();
+    const newDuration = reservation.duration;
+    const newEnd = newStart + newDuration;
 
-      //check if no part of the reservationtime + duration is between a storedreservation time + duration
-      if (
-        (newHours >= storedHours && newHours <= storedHours + storedDuration) || (newHours + newDuration > storedHours && newHours + newDuration <= storedHours + storedDuration)
-      ) {
-        ++foundReservations;
-        if (foundReservations > 1) {
-            reservationLogger.warn("Reservatie kon niet toegevoegd worden door overlapping: " + JSON.stringify(reservation));
-            return res.status(400).send("Reservation not valid");
-        } 
-        continue;
-      } else {
-        continue;
-      }
-    } else {
-      continue;
+    //check if the new reservation overlaps with the stored reservation
+    const reservationsOverlap =
+      (newStart >= storedStart  && newStart < storedEnd) ||             //new reservation starts during the stored reservation
+      (newEnd > storedStart  && newEnd <= storedEnd ) ||                //new reservation ends during the stored reservation
+      (newStart <= storedStart  && newEnd >= storedStart  + storedEnd)  //new reservation starts before and ends after the stored reservation
+  
+    if (reservationsOverlap) {
+      ++foundReservations;
+
+      //if there are more than 1 reservations found, send an error
+      if (foundReservations > 1) {
+          reservationLogger.warn("Reservatie kon niet toegevoegd worden door overlapping: " + JSON.stringify(reservation));
+          return res.status(400).send("Reservation not valid");
+      } 
     }
   }
 
+  //create a reservation document witch the correct format to be inserted in the database
   const reservationToAdd = await mongo.createReservationDocument(
     reservation.userId,
     reservation.roomId,
@@ -783,32 +790,84 @@ app.post("/reservations", async (req, res) => {
     reservation.duration
   );
 
+  //insert the reservation in the database
   const insertResponse = await mongo.insertDocument(
     reservationToAdd,
     mongo.dbStructure.RoomsData.dbName,
     mongo.dbStructure.RoomsData.reservations
   );
 
-  if (insertResponse.acknowledged) {
-    //log the full reservation as info
-    reservationLogger.info("Reservatie Toegevoegd: " + JSON.stringify(reservationToAdd));
-    return res.status(201).send("Reservation added");
-  } else {
-    //log the full reservation as error
+  if(!insertResponse.acknowledged) {
     reservationLogger.error("Reservatie kon niet toegevoegd worden door een interne fout: " + JSON.stringify(reservationToAdd));
     return res.status(500).send("Reservation could not be added");
   }
+
+  //send an email to the user
+  //create a mongoDb ObjectId from a string
+  const userId = new mongodb.ObjectId(reservation.userId);
+
+  //get the user for the reservation
+  const user = await mongo.getOnedocumentByFilter(
+    { _id: userId },
+    mongo.dbStructure.UserData.dbName,
+    mongo.dbStructure.UserData.users
+  );
+
+  //get the room for the reservation
+  const room = await mongo.getOnedocumentByFilter(
+    { _id: reservationToAdd.room },
+    mongo.dbStructure.RoomsData.dbName,
+    mongo.dbStructure.RoomsData.rooms
+  );
+
+  //change the reservationdate to brussels time
+  const dateOptions = {
+    timeZone:"Europe/Brussels",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  }
+  const reservationBrusselsTime = reservationDate.toLocaleDateString("nl-BE", dateOptions)
+
+  //construct the reservation to send in the email
+  const reservationToSend = {
+    user: user.firstName + " " + user.lastName,
+    room: room.description,
+    date: reservationBrusselsTime,
+    duration: reservationToAdd.duration
+  }
+
+  await emailSender.sendReservationCreatedEmail(user.email, reservationToSend);
+
+  reservationLogger.info("Reservatie Toegevoegd: " + JSON.stringify(reservationToAdd));
+  return res.status(201).send("Reservation added");
 });
 
 app.delete("/reservations", async(req, res) => {
   //create a new instance of the required classes
   const mongo = new MongoDatabase();
   const logger = new Logger("reservations.log");
+  const emailSender = new EmailSender();
+
+  //get the names of the databases and collections
+  const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
+  const usersDataDbName = mongo.dbStructure.UserData.dbName;
+  const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
+  const usersCollection = mongo.dbStructure.UserData.users;
+  const roomsCollection = mongo.dbStructure.RoomsData.rooms;
 
   //use the reservationId only
   const reservationId = new mongodb.ObjectId(req.body.reservationId);
-  const reservationsCollection = mongo.dbStructure.RoomsData.reservations;
-  const roomsDatadbName = mongo.dbStructure.RoomsData.dbName;
+
+  //get the reservation for later use
+  const reservation = await mongo.getOnedocumentByFilter(
+    { _id: reservationId },
+    roomsDatadbName,
+    reservationsCollection
+  );
 
   //delete the reservation
   const deleteResponse = await mongo.deleteDocument(
@@ -818,13 +877,51 @@ app.delete("/reservations", async(req, res) => {
   );
 
   //check if the reservation has been deleted, otherwise send an error
-  if (deleteResponse.acknowledged) {
-    logger.info("Reservatie verwijderd: "+ reservationId);
-    return res.status(200).send("Reservation deleted");
-  } else {
+  if(!deleteResponse.acknowledged) {
     logger.error("Reservatie kon niet verwijderd worden: "+ reservationId);
     return res.status(500).send("Reservation could not be deleted");
   }
+
+  //send an email to the user
+  //get the user for the reservation
+  const user = await mongo.getOnedocumentByFilter(
+    { _id: reservation.user },
+    usersDataDbName,
+    usersCollection
+  );
+
+  //get the room for the reservation
+  const room = await mongo.getOnedocumentByFilter(
+    { _id: reservation.room },
+    roomsDatadbName,
+    roomsCollection
+  );
+
+  //change the reservationdate to brussels time
+  const dateOptions = {
+    timeZone:"Europe/Brussels",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  }
+
+  const reservationBrusselsTime = reservation.date.toLocaleDateString("nl-BE", dateOptions)
+
+  //construct the reservation to send in the email
+  const reservationToSend = {
+    user: user.firstName + " " + user.lastName,
+    room: room.description,
+    date: reservationBrusselsTime,
+    duration: reservation.duration
+  }
+
+  await emailSender.sendReservationDeletedEmail(user.email, reservationToSend);
+
+  logger.info("Reservatie verwijderd: "+ reservationId);
+  return res.status(200).send("Reservation deleted");
 })
 
 app.post("/myReservations", async(req, res) => {
@@ -842,26 +939,29 @@ app.post("/myReservations", async(req, res) => {
   //give all the reservations for that user for today midnight and later
   const midnightToday = new Date(new Date().setHours(0, 0, 0, 0));
   const reservations = await mongo.getDocumentsByFilter(
-    { user: userId, date: { $gte: midnightToday } },
+    { 
+      user: userId, 
+      date: { $gte: midnightToday } 
+    },
     roomsDatadbName,
     reservationsCollection
   );
 
   //get the room for each reservation
-  for (let i = 0; i < reservations.length; i++) {
+  for (let reservation in reservations) {
     const room = await mongo.getOnedocumentByFilter(
-      { _id: reservations[i].room },
+      { _id: reservation.room },
       roomsDatadbName,
       roomsCollection
     );
-    reservations[i].room = room;
+    reservation.room = room;
   }
 
   return res.status(200).send(reservations);
 })
 
 app.get("/logfiles", async(req, res) => {
-  //import the logs in the logs directory
+  //import the logs from the logs directory
   const encryptor = new Encryptor();
   const loginLogger = new Logger("login.log");
   const registrationLogger = new Logger("registrations.log");
@@ -935,10 +1035,11 @@ app.listen(process.env.BACK_END_PORT, async () => {
     );
 
     //send an email to the user
-    const message = "Jouw account werd succesvol aangemaakt";
+    const emailSender = new EmailSender();
+
     try {
-      await sendEmail(user.email, message);
-      tempologger.info("Gebruiker en token toegevoegd: " + JSON.stringify(newUser) + " " + token);
+      await emailSender.sendUserCreatedEmail(user.email);
+      tempologger.info("Gebruiker en token toegevoegd: " + JSON.stringify(user));
     } catch (error) {
       tempologger.error("Er is iets fout gegaan bij het versturen van de email: " + error);
     }
