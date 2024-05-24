@@ -360,7 +360,7 @@ module.exports = class EmailSender {
   }
 
   sendVerificationEmail = async (email, cardNumber, token) => {
-    const verificationLink = `${process.env.BACK_END_URL}${process.env.BACK_END_PORT}/user/verify/${cardNumber}/${token}`;
+    const verificationLink = `${process.env.BACK_END_URL}/user/verify/${cardNumber}/${token}`;
     const html = this.createVerificationEmailTemplate(verificationLink);
 
     try {
