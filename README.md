@@ -1,4 +1,4 @@
-# Game Experience Room Server Vives Hogeschool Brugge
+# Game Experience Room Server Hogeschool VIVES, Brugge
 
 [![Made with Docker](https://img.shields.io/badge/Made_with-Docker-blue?logo=docker&logoColor=white)](https://www.docker.com/ "Go to Docker homepage")
 [![Made with Node.js](https://img.shields.io/badge/Node.js->=20-blue?logo=node.js&logoColor=white)](https://nodejs.org "Go to Node.js homepage")
