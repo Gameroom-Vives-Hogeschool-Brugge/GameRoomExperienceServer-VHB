@@ -1,11 +1,11 @@
-# Game Room Experience Server Vives Hogeschool Brugge
+# Game Experience Room Server Vives Hogeschool Brugge
 
 [![Made with Docker](https://img.shields.io/badge/Made_with-Docker-blue?logo=docker&logoColor=white)](https://www.docker.com/ "Go to Docker homepage")
 [![Made with Node.js](https://img.shields.io/badge/Node.js->=20-blue?logo=node.js&logoColor=white)](https://nodejs.org "Go to Node.js homepage")
 
-Welcome, this server is the backend of the Game Room Experience Reservation and Door Access application. This server should be therefore used in conjunction with the frontend application that can be found here -> [Frontend](https://github.com/Gameroom-Vives-Hogeschool-Brugge/GameroomExperienceApp-VHB). 
+Welcome, this server is the backend of the Game Experience Room Reservation and Door Access application. This server should be therefore used in conjunction with the frontend application that can be found here -> [Frontend](https://github.com/Gameroom-Vives-Hogeschool-Brugge/GameroomExperienceApp-VHB). 
 
-The Game Room Experience Reservation and Door Access application allows you to create, update and control reservations for the Game Experience Room. Furthermore it is connected to a electrically controlled door which you can open if you have a valid reservation at that time.
+The Game Experience Room Reservation and Door Access application allows you to create, update and control reservations for the Game Experience Room. Furthermore it is connected to a electrically controlled door which you can open if you have a valid reservation at that time.
 
 ## Team
 
